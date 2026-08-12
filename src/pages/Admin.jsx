@@ -11,7 +11,7 @@ import { useVisitantes } from "../utils/VisitantesContext";
 import { canaisDivulgacao, generos, vinculos } from "../data/setores";
 import { cursos } from "../data/cursos";
 import { abrirJanelaImpressao, compartilharCredencial } from "../utils/impressao";
-import "../css/formulario.css";
+import "../components/Formulario/formulario.css";
 import "../css/admin.css";
 
 const abas = [
