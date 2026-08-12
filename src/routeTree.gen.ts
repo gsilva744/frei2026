@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as CredenciamentoRouteImport } from './routes/credenciamento'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +23,40 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CredenciamentoRoute = CredenciamentoRouteImport.update({
+  id: '/credenciamento',
+  path: '/credenciamento',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/credenciamento': typeof CredenciamentoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/credenciamento': typeof CredenciamentoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/credenciamento': typeof CredenciamentoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin'
+  fullPaths: '/' | '/admin' | '/credenciamento'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin'
-  id: '__root__' | '/' | '/admin'
+  to: '/' | '/admin' | '/credenciamento'
+  id: '__root__' | '/' | '/admin' | '/credenciamento'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  CredenciamentoRoute: typeof CredenciamentoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/credenciamento': {
+      id: '/credenciamento'
+      path: '/credenciamento'
+      fullPath: '/credenciamento'
+      preLoaderRoute: typeof CredenciamentoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  CredenciamentoRoute: CredenciamentoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

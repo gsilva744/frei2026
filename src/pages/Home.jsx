@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+
 import Header from "../components/Header/Header";
 import Hero from "../components/Hero/Hero";
 import Sobre from "../components/Sobre/Sobre";
@@ -13,36 +13,18 @@ import LivroDourado from "../components/LivroDourado/LivroDourado";
 import Parceiros from "../components/Parceiros/Parceiros";
 
 import Footer from "../components/Footer/Footer";
-import Modal from "../components/Modal/Modal";
 import { useVisitantes } from "../utils/VisitantesContext";
 import predio from "../assets/escola.png";
 import "../components/Formulario/formulario.css";
 
-const usuarioFixo = "admin";
-const senhaFixa = "123456";
-
 function Home() {
   const navegar = useNavigate();
   const { adicionarVisitante } = useVisitantes();
-  const [modalAberto, setModalAberto] = useState(false);
-  const [usuario, setUsuario] = useState("");
-  const [senha, setSenha] = useState("");
-  const [erro, setErro] = useState("");
-
-  function entrar(evento) {
-    evento.preventDefault();
-    if (usuario === usuarioFixo && senha === senhaFixa) {
-      setModalAberto(false);
-      setErro("");
-      navegar({ to: "/admin" });
-    } else {
-      setErro("Usuário ou senha inválidos.");
-    }
-  }
 
   return (
     <div>
-      <Header onAbrirAreaRestrita={() => setModalAberto(true)} />
+      <Header onAbrirAreaRestrita={() => navegar({ to: "/admin" })} />
+
       <Hero />
       <Sobre />
       <LivroDourado />
@@ -73,29 +55,6 @@ function Home() {
 
       <Footer />
 
-      {modalAberto && (
-        <Modal titulo="Acesso Administrativo" onFechar={() => setModalAberto(false)}>
-          <form onSubmit={entrar}>
-            <div className="formulario-campo">
-              <label htmlFor="usuario">Usuário</label>
-              <input id="usuario" value={usuario} onChange={(e) => setUsuario(e.target.value)} />
-            </div>
-            <div className="formulario-campo">
-              <label htmlFor="senha">Senha</label>
-              <input
-                id="senha"
-                type="password"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-              />
-            </div>
-            {erro && <p style={{ color: "#b00020", fontSize: 12 }}>{erro}</p>}
-            <button type="submit" className="botao-amarelo formulario-enviar">
-              Entrar
-            </button>
-          </form>
-        </Modal>
-      )}
     </div>
   );
 }
