@@ -77,6 +77,10 @@
 }
 
 @media (max-width: 900px) {
+  .header-conteudo {
+    width: calc(100% - 32px);
+  }
+
   .header-botao-menu {
     display: block;
   }
@@ -99,6 +103,18 @@
 
   .header-acao {
     display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .header-logo img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .header-logo-texto,
+  .header-logo-texto strong {
+    font-size: 10px;
   }
 }
 

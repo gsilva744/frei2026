@@ -98,12 +98,25 @@ a {
 }
 
 @media (max-width: 640px) {
+  .container {
+    padding: 0 16px;
+  }
+
   .titulo-secao {
     font-size: 24px;
   }
 
   .secao {
     padding: 40px 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .botao-azul,
+  .botao-amarelo,
+  .hero-botao-claro {
+    padding-left: 18px;
+    padding-right: 18px;
   }
 }
 

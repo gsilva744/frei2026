@@ -42,3 +42,9 @@
   font-size: 11px;
   text-transform: uppercase;
 }
+
+@media (max-width: 380px) {
+  .contador-valores {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

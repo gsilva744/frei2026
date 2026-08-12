@@ -20,6 +20,7 @@
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .crachas-selecao {
@@ -140,4 +141,10 @@
 
 .crachas-barra .admin-busca {
   flex: 1;
+}
+
+@media (max-width: 560px) {
+  .crachas-barra-botoes {
+    width: 100%;
+  }
 }

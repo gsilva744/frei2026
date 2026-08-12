@@ -63,7 +63,6 @@ function PainelAdmin({ sair }) {
 function Admin() {
   return (
     <AreaRestrita
-      perfil="admin"
       titulo="Painel Administrativo"
       descricao="Acesso exclusivo da administração. Faça login para continuar."
     >

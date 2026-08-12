@@ -41,3 +41,9 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+@media (max-width: 420px) {
+  .footer-colunas {
+    grid-template-columns: 1fr;
+  }
+}

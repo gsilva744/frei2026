@@ -411,7 +411,6 @@ function PainelCredenciamento({ sair }) {
 function Credenciamento() {
   return (
     <AreaRestrita
-      perfil="credenciamento"
       titulo="Área de Credenciamento"
       descricao="Acesso restrito à equipe da feira. Informe suas credenciais."
     >

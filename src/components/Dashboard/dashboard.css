@@ -168,6 +168,21 @@
   .dashboard-roscas {
     grid-template-columns: 1fr;
   }
+
+  .dashboard-filtro,
+  .dashboard-filtro select,
+  .dashboard-alternador {
+    width: 100%;
+  }
+
+  .dashboard-barra-item {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .dashboard-barra-trilha {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
 }
 
 /* Filtros e blocos analiticos do painel */
