@@ -83,7 +83,7 @@ function Admin() {
       <header className="admin-topo">
         <div className="container admin-topo-conteudo">
           <div className="admin-topo-marca">
-            <img src={logoFeira.url} alt="Logo da 6ª Feira das Profissões" />
+            <img src={logoFeira} alt="Logo da 6ª Feira das Profissões" />
             <div>
               <strong>Instituto Social Nossa Senhora de Fátima</strong>
               <span className="admin-topo-legenda">
