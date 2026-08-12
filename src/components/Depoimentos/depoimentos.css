@@ -48,8 +48,17 @@
 }
 
 @media (max-width: 640px) {
+  .container-depoimentos {
+    width: 100%;
+  }
+
   .depoimentos-card {
     grid-template-columns: 1fr;
+  }
+
+  .depoimentos-foto {
+    max-width: 200px;
+    margin: 0 auto;
   }
 }
 

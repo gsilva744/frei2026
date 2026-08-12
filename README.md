@@ -256,17 +256,23 @@ Entrar
 
 Após entrar abrir uma página administrativa.
 
-Não precisa existir autenticação real.
+### Configuração do acesso restrito
 
-Pode utilizar um usuário e senha fixos apenas para demonstração.
+As páginas `/admin` e `/credenciamento` exigem autenticação no servidor e voltam
+a solicitar o login a cada novo acesso. Antes de publicar, configure estas duas
+variáveis de ambiente no provedor de hospedagem (não as coloque no código):
 
-Exemplo:
+```bash
+RESTRICTED_AREA_USERNAME=um-usuario-forte
+RESTRICTED_AREA_PASSWORD=uma-senha-longa-e-unica
+```
 
-Usuário:
-admin
+Para desenvolvimento local, copie `.env.example` para `.env` e preencha os
+valores. O `.env` é ignorado pelo Git. No deploy em Cloudflare, cadastre as
+mesmas chaves como secrets/variáveis de ambiente no projeto; o arquivo `.env`
+local não é enviado para o worker.
 
-Senha:
-123456
+Sem as duas variáveis, as páginas permanecem bloqueadas por segurança.
 
 Página Administrativa
 

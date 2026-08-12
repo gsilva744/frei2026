@@ -266,6 +266,25 @@
   }
 }
 
+@media (max-width: 560px) {
+  .admin-topo-conteudo {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-topo-acoes {
+    width: 100%;
+  }
+
+  .admin-painel {
+    padding: 14px;
+  }
+
+  .admin-modal-botoes {
+    flex-wrap: wrap;
+  }
+}
+
 .admin-topo-marca {
   display: flex;
   align-items: center;
