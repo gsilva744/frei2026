@@ -73,29 +73,6 @@ function Home() {
 
       <Footer />
 
-      {modalAberto && (
-        <Modal titulo="Acesso Administrativo" onFechar={() => setModalAberto(false)}>
-          <form onSubmit={entrar}>
-            <div className="formulario-campo">
-              <label htmlFor="usuario">Usuário</label>
-              <input id="usuario" value={usuario} onChange={(e) => setUsuario(e.target.value)} />
-            </div>
-            <div className="formulario-campo">
-              <label htmlFor="senha">Senha</label>
-              <input
-                id="senha"
-                type="password"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-              />
-            </div>
-            {erro && <p style={{ color: "#b00020", fontSize: 12 }}>{erro}</p>}
-            <button type="submit" className="botao-amarelo formulario-enviar">
-              Entrar
-            </button>
-          </form>
-        </Modal>
-      )}
     </div>
   );
 }
