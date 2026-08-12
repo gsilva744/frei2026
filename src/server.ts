@@ -1,5 +1,4 @@
 import "./lib/error-capture";
-import { timingSafeEqual } from "node:crypto";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 
@@ -18,15 +17,35 @@ type RuntimeEnv = {
 
 function getRestrictedAreaCredentials(env: unknown): RuntimeEnv {
   const runtimeEnv = env as RuntimeEnv | undefined;
+  const localEnv = typeof process === "undefined" ? undefined : process.env;
 
   // Cloudflare fornece os secrets no argumento `env` do handler. O fallback
   // mantém o uso do .env no servidor de desenvolvimento local.
   return {
     RESTRICTED_AREA_USERNAME:
-      runtimeEnv?.RESTRICTED_AREA_USERNAME ?? process.env.RESTRICTED_AREA_USERNAME,
+      runtimeEnv?.RESTRICTED_AREA_USERNAME ?? localEnv?.RESTRICTED_AREA_USERNAME,
     RESTRICTED_AREA_PASSWORD:
-      runtimeEnv?.RESTRICTED_AREA_PASSWORD ?? process.env.RESTRICTED_AREA_PASSWORD,
+      runtimeEnv?.RESTRICTED_AREA_PASSWORD ?? localEnv?.RESTRICTED_AREA_PASSWORD,
   };
+}
+
+function encodeBasicCredentials(value: string): string {
+  const bytes = new TextEncoder().encode(value);
+  let binary = "";
+
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+}
+
+function constantTimeEqual(a: string, b: string): boolean {
+  let difference = a.length ^ b.length;
+  const maxLength = Math.max(a.length, b.length);
+
+  for (let index = 0; index < maxLength; index++) {
+    difference |= (a.charCodeAt(index) || 0) ^ (b.charCodeAt(index) || 0);
+  }
+
+  return difference === 0;
 }
 
 function hasRestrictedAreaAccess(request: Request, env: unknown): boolean {
@@ -37,9 +56,9 @@ function hasRestrictedAreaAccess(request: Request, env: unknown): boolean {
   if (!username || !password || !authorization?.startsWith("Basic ")) return false;
 
   try {
-    const received = Buffer.from(authorization.slice(6), "base64");
-    const expected = Buffer.from(`${username}:${password}`);
-    return received.length === expected.length && timingSafeEqual(received, expected);
+    const received = authorization.slice(6);
+    const expected = encodeBasicCredentials(`${username}:${password}`);
+    return constantTimeEqual(received, expected);
   } catch {
     return false;
   }
