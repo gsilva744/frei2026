@@ -1,0 +1,8 @@
+.formulario-card {
+    width: 400px;
+    margin: auto;
+}
+
+.formulario-card input, .formulario-card select {
+    width: 100%;
+}

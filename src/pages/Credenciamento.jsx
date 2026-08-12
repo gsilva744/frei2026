@@ -11,8 +11,8 @@ import { useVisitantes } from "../utils/VisitantesContext";
 import { canaisDivulgacao, generos, vinculos } from "../data/setores";
 import { cursos } from "../data/cursos";
 import { abrirJanelaImpressao, compartilharCredencial } from "../utils/impressao";
-import "../components/Formulario/formulario.css";
 import "../css/admin.css";
+import '../css/credenciamento.css'
 
 const abas = [
   { id: "visitantes", nome: "Visitantes" },

@@ -41,6 +41,7 @@
   border-left: 4px solid var(--amarelo);
   padding: 16px 18px;
   box-shadow: var(--sombra);
+  margin-bottom: 20px;
   animation: aparecer 0.4s ease both;
   transition: transform 0.25s, box-shadow 0.25s;
 }
