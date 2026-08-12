@@ -1,0 +1,68 @@
+.acesso-pagina {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px 16px;
+  background: linear-gradient(160deg, var(--azul-instituto, #17356f), #0d2148);
+}
+
+.acesso-cartao {
+  width: 100%;
+  max-width: 380px;
+  background: #fff;
+  border-radius: 18px;
+  padding: 32px 26px;
+  box-shadow: 0 24px 60px rgba(6, 20, 47, 0.35);
+  text-align: center;
+}
+
+.acesso-cartao img {
+  width: 78px;
+  height: auto;
+  margin: 0 auto 14px;
+}
+
+.acesso-cartao h1 {
+  font-size: 1.35rem;
+  color: var(--azul-instituto, #17356f);
+  margin-bottom: 6px;
+}
+
+.acesso-cartao p {
+  font-size: 0.9rem;
+  color: #5a6479;
+  margin-bottom: 20px;
+}
+
+.acesso-cartao .formulario-campo {
+  text-align: left;
+  margin-bottom: 14px;
+}
+
+.acesso-erro {
+  color: #c0392b;
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+}
+
+.acesso-botao {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.acesso-voltar {
+  display: inline-block;
+  margin-top: 16px;
+  font-size: 0.85rem;
+  color: #5a6479;
+}
+
+.acesso-sair {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: #fff;
+  border-radius: 999px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
