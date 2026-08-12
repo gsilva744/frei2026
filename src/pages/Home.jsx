@@ -13,36 +13,18 @@ import LivroDourado from "../components/LivroDourado/LivroDourado";
 import Parceiros from "../components/Parceiros/Parceiros";
 
 import Footer from "../components/Footer/Footer";
-import Modal from "../components/Modal/Modal";
 import { useVisitantes } from "../utils/VisitantesContext";
 import predio from "../assets/escola.png";
 import "../components/Formulario/formulario.css";
 
-const usuarioFixo = "admin";
-const senhaFixa = "123456";
-
 function Home() {
   const navegar = useNavigate();
   const { adicionarVisitante } = useVisitantes();
-  const [modalAberto, setModalAberto] = useState(false);
-  const [usuario, setUsuario] = useState("");
-  const [senha, setSenha] = useState("");
-  const [erro, setErro] = useState("");
-
-  function entrar(evento) {
-    evento.preventDefault();
-    if (usuario === usuarioFixo && senha === senhaFixa) {
-      setModalAberto(false);
-      setErro("");
-      navegar({ to: "/admin" });
-    } else {
-      setErro("Usuário ou senha inválidos.");
-    }
-  }
 
   return (
     <div>
-      <Header onAbrirAreaRestrita={() => setModalAberto(true)} />
+      <Header onAbrirAreaRestrita={() => navegar({ to: "/admin" })} />
+
       <Hero />
       <Sobre />
       <LivroDourado />
