@@ -6,12 +6,12 @@ import QRCodeVisitante from "../components/QRCode/QRCodeVisitante";
 import LeitorQr from "../components/LeitorQr/LeitorQr";
 import Crachas from "../components/Crachas/Crachas";
 import Dashboard from "../components/Dashboard/Dashboard";
-import logoFeira from "../assets/logoFeira.png.asset.json";
+import logoFeira from "../assets/logoFrei.png";
 import { useVisitantes } from "../utils/VisitantesContext";
 import { canaisDivulgacao, generos, vinculos } from "../data/setores";
 import { cursos } from "../data/cursos";
 import { abrirJanelaImpressao, compartilharCredencial } from "../utils/impressao";
-import "../css/formulario.css";
+import "../components/Formulario/formulario.css";
 import "../css/admin.css";
 
 const abas = [
@@ -83,7 +83,7 @@ function Admin() {
       <header className="admin-topo">
         <div className="container admin-topo-conteudo">
           <div className="admin-topo-marca">
-            <img src={logoFeira.url} alt="Logo da 6ª Feira das Profissões" />
+            <img src={logoFeira} alt="Logo da 6ª Feira das Profissões" />
             <div>
               <strong>Instituto Social Nossa Senhora de Fátima</strong>
               <span className="admin-topo-legenda">
