@@ -58,6 +58,11 @@
   color: var(--azul);
 }
 
+a.botao-amarelo {
+  font-size: 14px;
+  padding: 9px;
+}
+
 .admin-resumo-rotulo {
   font-size: 12px;
   text-transform: uppercase;

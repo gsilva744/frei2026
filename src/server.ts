@@ -121,7 +121,16 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const { pathname } = new URL(request.url);
-      if (protectedPaths.has(pathname) && !hasRestrictedAreaAccess(request, env)) {
+      // A tela da área restrita precisa carregar sem autenticação para exibir
+      // o formulário. Apenas a requisição de validação disparada por ele é
+      // protegida aqui; bloquear toda a rota criava um ciclo em que o login
+      // nunca chegava a ser renderizado.
+      const isRestrictedAreaCheck = request.headers.get("x-restricted-area-check") === "1";
+      if (
+        protectedPaths.has(pathname) &&
+        isRestrictedAreaCheck &&
+        !hasRestrictedAreaAccess(request, env)
+      ) {
         return restrictedAreaResponse(request, env);
       }
 
