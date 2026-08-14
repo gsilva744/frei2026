@@ -121,6 +121,41 @@
 .atracoes-lista .atracoes-item:nth-child(4) {
   animation-delay: 0.21s;
 }
+.atracoes-lista .atracoes-item:nth-child(5) {
+  animation-delay: 0.28s;
+}
+.atracoes-lista .atracoes-item:nth-child(6) {
+  animation-delay: 0.35s;
+}
+.atracoes-lista .atracoes-item:nth-child(7) {
+  animation-delay: 0.42s;
+}
+.atracoes-lista .atracoes-item:nth-child(8) {
+  animation-delay: 0.49s;
+}
+.atracoes-lista .atracoes-item:nth-child(9) {
+  animation-delay: 0.56s;
+}
+.atracoes-lista .atracoes-item:nth-child(10) {
+  animation-delay: 0.63s;
+}
+.atracoes-lista .atracoes-item:nth-child(11) {
+  animation-delay: 0.70s;
+}
+.atracoes-lista .atracoes-item:nth-child(12) {
+  animation-delay: 0.77s;
+}
+.atracoes-lista .atracoes-item:nth-child(13) {
+  animation-delay: 0.84s;
+}
+.atracoes-lista .atracoes-item:nth-child(14) {
+  animation-delay: 0.91s;
+}
+.atracoes-lista .atracoes-item:nth-child(15) {
+  animation-delay: 0.98s;
+}
+
+
 
 .atracoes-horario {
   background-color: var(--azul);
@@ -135,6 +170,29 @@
 
 .atracoes-nome {
   font-size: 16px;
+}
+
+.atracoes-pontos {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.atracoes-ponto {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--cinza-borda);
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.atracoes-ponto:hover {
+  transform: scale(1.15);
+}
+
+.atracoes-ponto.ativo {
+  background-color: var(--azul);
 }
 
 @keyframes aparecer {

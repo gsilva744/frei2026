@@ -162,8 +162,27 @@
     grid-template-columns: 1fr;
   }
 
+  .cursos-categoria:first-child {
+    margin-right: 30px;
+  }
+
+  .cursos-categorias {
+    gap: 0px;
+  }
+
   .cursos-categoria {
-    min-width: 130px;
+    min-width: 150px;
     padding: 14px;
+    width: 40%;
+    
+  }
+  .cursos-categoria:last-child {
+    width: 90%;
+    margin-top: 30px;
+  }
+
+  .cursos-item {
+    width: 90%;
+    margin: auto;
   }
 }

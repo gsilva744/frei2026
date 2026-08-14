@@ -47,6 +47,15 @@ function Header({ onAbrirAreaRestrita }) {
               {item.nome}
             </button>
           ))}
+          <button
+            className="header-menu-area-restrita"
+            onClick={() => {
+              setMenuAberto(false);
+              onAbrirAreaRestrita();
+            }}
+          >
+            Área Restrita
+          </button>
         </nav>
 
         <div className="header-acao">

@@ -69,6 +69,10 @@
   border-color: var(--amarelo);
 }
 
+.header-menu-area-restrita {
+  display: none;
+}
+
 .header-botao-menu {
   display: none;
   background: none;
@@ -99,6 +103,13 @@
     background-color: var(--azul-escuro);
     padding: 16px 20px;
     gap: 12px;
+  }
+
+  .header-menu-aberto .header-menu-area-restrita {
+    display: block;
+    color: var(--amarelo);
+    border-color: var(--amarelo);
+    text-align: center;
   }
 
   .header-acao {

@@ -16,9 +16,9 @@ import eletricista from '../assets/eletricista.png';
 
 /* Categorias de cursos usadas nos botões da seção (icone = componente Lucide) */
 export const categorias = [
-  { id: "Tecnicos", nome: "Técnicos", Icone: Wrench },
   { id: "Livres", nome: "Livres", Icone: BookOpen },
   { id: "Qualificacoes", nome: "Qualificações", Icone: GraduationCap },
+  { id: "Tecnicos", nome: "Técnicos", Icone: Wrench },
 ];
 
 export const cursos = [
