@@ -1,5 +1,5 @@
-import sobre1 from "../../assets/sobre-1.jpg";
-import sobre2 from "../../assets/sobre-2.jpg";
+import sobre1 from "../../assets/sobre-1.webp";
+import sobre2 from "../../assets/sobre2.webp";
 import "./sobre.css";
 
 function Sobre() {
