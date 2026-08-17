@@ -38,6 +38,12 @@
     grid-template-columns: 1fr;
   }
 
+  .sobre-texto {
+    width: 95%;
+    display: block;
+    margin: auto;
+  }
+
   .sobre-linha-invertida .sobre-imagem {
     order: -1;
   }
