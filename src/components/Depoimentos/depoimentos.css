@@ -3,6 +3,10 @@
   margin: auto;
 }
 
+.secao-depoimentos {
+  padding: 0px 0px 40px 0px;
+}
+
 .depoimentos-card {
   background-color: var(--azul);
   height: auto;

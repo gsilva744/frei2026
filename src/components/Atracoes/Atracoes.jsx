@@ -14,8 +14,12 @@ function Atracoes() {
     (paginaAtual + 1) * atracoesPorPagina,
   );
 
+  function irParaInscricao() {
+    document.getElementById("inscricao").scrollIntoView({ behavior: "smooth" });
+  }
+
   return (
-    <section className="secao secao-cinza" id="programacao">
+    <section className="secao-atracao secao-cinza" id="programacao">
       <div className="container">
         <h2 className="titulo-secao">Local de Atrações</h2>
 
@@ -77,6 +81,12 @@ function Atracoes() {
               </div>
             )}
           </div>
+        </div>
+
+        <div className="inscrever-se">
+          <button className="botao-azul atracao-button" onClick={irParaInscricao}>
+              Inscrever-se!
+          </button>
         </div>
       </div>
     </section>

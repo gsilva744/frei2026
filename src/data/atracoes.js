@@ -20,7 +20,7 @@ export const atracoesPorAndar = {
     { horario: "Stand", nome: "Caricatura – alunos de Comunicação Visual" },
     { horario: "Stand", nome: "Exposição e venda dos livros do Frei Xavier" },
     { horario: "Stand", nome: "G3 Kids - Maquiagem artística" },
-    { horario: "Stand", nome: "Oficina de Linkedin – Laboratório" },
+    { horario: "Stand", nome: "Oficina de Linkedin – Laboratório de Informática" },
     { horario: "Sala 4", nome: "Óticas Carol Veleiros – Exame de Vista gratuito" },
     { horario: "Sala 5", nome: "Caixa" },
     { horario: "Sala 6", nome: "46º GEAT - Grupo Escoteiro Almirante Tamandaré" },

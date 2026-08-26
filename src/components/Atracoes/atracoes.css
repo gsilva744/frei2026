@@ -155,7 +155,9 @@
   animation-delay: 0.98s;
 }
 
-
+.secao-atracao {
+  padding: 60px 0 20px 0;
+}
 
 .atracoes-horario {
   background-color: var(--azul);
@@ -210,4 +212,15 @@
   .atracoes-cards {
     grid-template-columns: 1fr;
   }
+}
+
+.atracao-button {
+  margin-top: 20px;
+}
+
+.inscrever-se{
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
 }

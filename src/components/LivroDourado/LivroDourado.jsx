@@ -50,7 +50,6 @@ function LivroDourado() {
           <ul className="livro-passos">
             {passos.map((passo) => (
               <li key={passo.id}>
-                <span className="livro-numero">{passo.id}</span>
                 <div>
                   <strong>{passo.titulo}</strong>
                   <p>{passo.texto}</p>

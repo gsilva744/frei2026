@@ -10,7 +10,7 @@ function Sobre() {
   return (
     <section className="secao" id="sobre">
       <div className="container">
-        <h2 className="titulo-secao">Sobre a Feira de Profissões</h2>
+        <h2 className="titulo-secao">Sobre a Feira das Profissões</h2>
 
         <div className="sobre-linha">
           <img
@@ -27,8 +27,7 @@ function Sobre() {
 
         <div className="sobre-linha sobre-linha-invertida">
           <p className="sobre-texto">
-            Entre histórias, experiências e aprendizados, descobrimos que os maiores legados são
-            aqueles que continuam inspirando novas jornadas dentro e fora da sala de aula.
+           Ao longo da feira, cada experiência foi pensada para apresentar diferentes áreas profissionais, despertar a curiosidade e incentivar novas descobertas, mostrando que cada conhecimento adquirido pode contribuir para a construção de um futuro cheio de possibilidades.
           </p>
           <img
             className="sobre-imagem"

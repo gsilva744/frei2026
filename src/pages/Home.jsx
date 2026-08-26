@@ -30,12 +30,14 @@ function Home() {
       <LivroDourado />
       <Atracoes />
 
-      <Localizacao />
+      
       <Cursos />
+
+      <Depoimentos />
 
       <section className="secao secao-cinza" id="inscricao">
         <div className="container">
-          <h2 className="titulo-secao">Venha se divertir com a gente, se inscreva já!</h2>
+          <h2 className="titulo-secao">Venha se divertir com a gente! Inscreva-se já!</h2>
           <div className="formulario-area">
             <Formulario onCadastrar={adicionarVisitante} />
             <div className="formulario-lateral">
@@ -51,8 +53,8 @@ function Home() {
         </div>
       </section>
 
-      <Depoimentos />
-
+      
+      <Localizacao />
       <Footer />
 
     </div>

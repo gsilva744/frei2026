@@ -12,7 +12,7 @@ function Localizacao() {
           <div className="localizacao-info">
             <h3>Localização do Instituto</h3>
             <h4>Endereço</h4>
-            <p>Av. Coronel Octaviano de Freitas Costa, 463 - Socorro, São Paulo - SP, 04773-000</p>
+            <p>Av. Coronel Octaviano de Freitas Costa, 463 - Veleiros, São Paulo - SP, 04773-000</p>
             <h4>Ponto de Referência</h4>
             <p>Próximo à estação Socorro da CPTM.</p>
           </div>

@@ -16,12 +16,12 @@ function Footer() {
           <div>
             <h4>Endereço</h4>
             <p>Av. Coronel Octaviano de Freitas Costa, 463</p>
-            <p>Socorro, São Paulo - SP</p>
+            <p>Veleiros, São Paulo - SP</p>
           </div>
           <div>
             <h4>Data e horário</h4>
             <p>19 de setembro de 2026</p>
-            <p>Das 09h às 18h</p>
+            <p>Das 10h às 16h</p>
           </div>
           <div>
             <h4>Links rápidos</h4>

@@ -8,12 +8,12 @@ function Hero() {
   return (
     <section className="hero" id="inicio">
       <div className="container hero-conteudo">
-        <span className="hero-selo">19 de setembro de 2026 · 09h às 18h</span>
+        <span className="hero-selo">19 de setembro de 2026 · 10h às 16h</span>
         <h1>
           Descubra sua profissão do futuro na <span>6ª Feira das Profissões!!</span>
         </h1>
         <p>
-          Um dia inteiro para conhecer os cursos do Instituto, conversar com professores e alunos e
+          Um dia para você conhecer todo o Instituto, conversar com professores, alunos e
           dar o primeiro passo para a sua carreira.
         </p>
         <div className="hero-botoes">

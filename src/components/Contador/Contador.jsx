@@ -38,7 +38,7 @@ function Contador() {
   return (
     <div className="contador-card">
       <h3>⏰ Data e Hora Feira 2026</h3>
-      <p>Horário: 09h às 18h · Dia: 19/09</p>
+      <p>Horário: 10h às 16h · Dia: 19/09</p>
       <div className="contador-valores">
         {itens.map((item) => (
           <div className="contador-item" key={item.rotulo}>

@@ -7,7 +7,7 @@ function Depoimentos() {
   const depoimento = depoimentos[indice];
 
   return (
-    <section className="secao" id="depoimentos">
+    <section className="secao-depoimentos" id="depoimentos">
       <div className="container-depoimentos">
         <h2 className="titulo-secao">Depoimentos</h2>
         <p className="depoimentos-intro">
