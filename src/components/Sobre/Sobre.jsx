@@ -1,5 +1,5 @@
 import sobre1 from "../../assets/sobre-1.webp";
-import sobre2 from "../../assets/sobre2.webp";
+import sobre2 from "../../assets/sobre2.avif";
 import "./sobre.css";
 
 function Sobre() {
@@ -19,10 +19,13 @@ function Sobre() {
             alt="Equipe do instituto reunida no pátio"
             loading="lazy"
           />
-          <p className="sobre-texto">
-            Nossa equipe está pronta para receber você e mostrar que o conhecimento, o trabalho em
-            equipe e o compromisso com as pessoas fazem a diferença na formação de cada estudante.
-          </p>
+          <div className="texto-sobre">
+            <p className="sobre-texto">
+              Nossa equipe está pronta para receber você e mostrar que o conhecimento, o trabalho em
+              equipe e o compromisso com as pessoas fazem a diferença na formação de cada estudante.
+            </p>
+            <a href="https://www.acaonsfatima.org.br/escola-prof-nossa-senhora-de-f%C3%A1tima" target="_blank" >FASDFW</a>
+          </div>
         </div>
 
         <div className="sobre-linha sobre-linha-invertida">

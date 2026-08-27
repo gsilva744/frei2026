@@ -39,16 +39,18 @@ function Cursos() {
 
         <div className="cursos-grade" key={categoriaSelecionada}>
           {cursosFiltrados.map((curso) => (
-            <article className="cursos-item" key={curso.id}>
-              <div className="cursos-item-imagem">
-                <img src={curso.imagem} alt={curso.nome} loading="lazy" />
-                <span className="cursos-item-tag">{categoriaSelecionada}</span>
-              </div>
-              <div className="cursos-item-texto">
-                <h3>{curso.nome}</h3>
-                <p>{curso.descricao}</p>
-              </div>
-            </article>
+            <a href="https://www.acaonsfatima.org.br/escola-prof-nossa-senhora-de-f%C3%A1tima" target="_blank" >
+              <article className="cursos-item" key={curso.id}>
+                <div className="cursos-item-imagem">
+                  <img src={curso.imagem} alt={curso.nome} loading="lazy" />
+                  <span className="cursos-item-tag">{categoriaSelecionada}</span>
+                </div>
+                <div className="cursos-item-texto">
+                  <h3>{curso.nome}</h3>
+                  <p>{curso.descricao}</p>
+                </div>
+              </article>
+            </a>
           ))}
         </div>
 

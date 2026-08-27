@@ -5,7 +5,7 @@ const passos = [
   {
     id: 1,
     titulo: "Venha à feira",
-    texto: "Ex-alunos têm entrada especial no dia 19 de setembro, das 09h às 18h.",
+    texto: "Ex-alunos têm entrada especial no dia 19 de setembro, das 10h às 16h.",
   },
   {
     id: 2,
