@@ -9,7 +9,7 @@
 .sobre-imagem {
   width: 98%;
   margin: auto;
-  height: 250px;
+  height: 330px;
   object-fit: cover;
   border-radius: var(--raio);
   box-shadow: var(--sombra);
@@ -24,7 +24,7 @@
   font-size: 20px;
   color: var(--texto-claro);
   text-align: justify;
-  line-height: 2;
+  line-height: 2.2;
   
 }
 

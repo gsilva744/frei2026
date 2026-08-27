@@ -30,7 +30,7 @@ function Sobre() {
 
         <div className="sobre-linha sobre-linha-invertida">
           <p className="sobre-texto">
-           Ao longo da feira, cada experiência foi pensada para apresentar diferentes áreas profissionais, despertar a curiosidade e incentivar novas descobertas, mostrando que cada conhecimento adquirido pode contribuir para a construção de um futuro cheio de possibilidades.
+           A Feira das Profissões é o momento ideal para você conhecer nossa escola, descobrir nossos cursos e viver experiências que inspiram, reunindo aprendizado, diversão e novas possibilidades para quem quer começar a construir o futuro!
           </p>
           <img
             className="sobre-imagem"
