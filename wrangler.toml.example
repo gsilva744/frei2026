@@ -1,0 +1,9 @@
+# Copie este arquivo para wrangler.toml ao configurar o deploy no Cloudflare.
+name = "feira-frei-2026"
+compatibility_date = "2026-08-26"
+
+# Crie um banco D1 no Cloudflare, substitua o database_id e mantenha o binding DB.
+[[d1_databases]]
+binding = "DB"
+database_name = "feira-frei-2026"
+database_id = "COLE_AQUI_O_ID_DO_SEU_BANCO_D1"

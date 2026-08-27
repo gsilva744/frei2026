@@ -4,6 +4,21 @@
   padding-bottom: 50px;
 }
 
+/* Estado visual da conexão D1 no painel de credenciamento. */
+.admin-banco-status {
+  margin: 20px 0 -6px;
+  padding: 10px 14px;
+  border-radius: var(--raio);
+  background: #fff3cd;
+  color: #775b00;
+  font-size: 14px;
+}
+
+.admin-banco-status.conectado {
+  background: #e7f7ed;
+  color: #17633b;
+}
+
 .admin-topo {
   background: linear-gradient(135deg, var(--azul-escuro), var(--azul-claro));
   color: var(--branco);

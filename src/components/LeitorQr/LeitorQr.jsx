@@ -31,14 +31,21 @@ function LeitorQr() {
     [presencas, setorAtivo],
   );
 
-  function registrarLeitura(resultado) {
+  async function registrarLeitura(resultado) {
     if (resultado.texto === ultimoCodigoRef.current) return;
     ultimoCodigoRef.current = resultado.texto;
     setTimeout(() => {
       ultimoCodigoRef.current = "";
     }, 2500);
 
-    const retorno = registrarPresenca(resultado.texto, setorAtivo);
+    let retorno;
+    try {
+      retorno = await registrarPresenca(resultado.texto, setorAtivo);
+    } catch (erro) {
+      setMensagem("");
+      setAviso(erro.message || "Não foi possível registrar a presença no banco.");
+      return;
+    }
     const leitura = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       texto: resultado.texto,
@@ -114,7 +121,7 @@ function LeitorQr() {
       );
       const imagem = contexto.getImageData(0, 0, canvas.width, canvas.height);
       const resultado = lerQrCode(imagem);
-      if (resultado) registrarLeitura(resultado);
+      if (resultado) void registrarLeitura(resultado);
     }, 300);
 
     return () => clearInterval(intervalo);
@@ -138,7 +145,7 @@ function LeitorQr() {
       contexto.drawImage(imagemHtml, 0, 0, canvas.width, canvas.height);
       const imagem = contexto.getImageData(0, 0, canvas.width, canvas.height);
       const resultado = lerQrCode(imagem);
-      if (resultado) registrarLeitura(resultado);
+      if (resultado) void registrarLeitura(resultado);
       else setAviso("Nenhum QR Code encontrado nesta imagem.");
       URL.revokeObjectURL(imagemHtml.src);
     };
@@ -228,7 +235,9 @@ function LeitorQr() {
                   </div>
                   <QRCodeVisitante codigo={ultimaLeitura.texto} tamanho={130} />
                   <p className="cracha-nome">
-                    {ultimaLeitura.visitante ? ultimaLeitura.visitante.nome : "Visitante não listado"}
+                    {ultimaLeitura.visitante
+                      ? ultimaLeitura.visitante.nome
+                      : "Visitante não listado"}
                   </p>
                   <p className="cracha-linha">
                     {ultimaLeitura.visitante?.cursoInteresse || "Curso não informado"}

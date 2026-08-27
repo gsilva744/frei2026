@@ -38,6 +38,7 @@ const nomesDeCursos = Array.from(new Set(cursos.map((curso) => curso.nome)));
 function Formulario({ onCadastrar, mostrarQrCode = true, titulo, descricao }) {
   const [campos, setCampos] = useState(camposVazios);
   const [erro, setErro] = useState("");
+  const [enviando, setEnviando] = useState(false);
   const [visitanteCadastrado, setVisitanteCadastrado] = useState(null);
 
   function alterarCampo(evento) {
@@ -47,7 +48,7 @@ function Formulario({ onCadastrar, mostrarQrCode = true, titulo, descricao }) {
     setCampos((anterior) => ({ ...anterior, [name]: tratado }));
   }
 
-  function enviarFormulario(evento) {
+  async function enviarFormulario(evento) {
     evento.preventDefault();
     const nome = campos.nome.trim();
     if (nome.length < 3 || nome.length > 100) {
@@ -64,13 +65,20 @@ function Formulario({ onCadastrar, mostrarQrCode = true, titulo, descricao }) {
     }
 
     setErro("");
-    const novoVisitante = onCadastrar({
-      ...campos,
-      nome,
-      email: campos.email.trim().slice(0, 255),
-    });
-    setVisitanteCadastrado(novoVisitante);
-    setCampos(camposVazios);
+    setEnviando(true);
+    try {
+      const novoVisitante = await onCadastrar({
+        ...campos,
+        nome,
+        email: campos.email.trim().slice(0, 255),
+      });
+      setVisitanteCadastrado(novoVisitante);
+      setCampos(camposVazios);
+    } catch (erroCadastro) {
+      setErro(erroCadastro.message || "Não foi possível concluir a inscrição.");
+    } finally {
+      setEnviando(false);
+    }
   }
 
   return (
@@ -201,8 +209,8 @@ function Formulario({ onCadastrar, mostrarQrCode = true, titulo, descricao }) {
 
       {erro && <p className="formulario-erro">{erro}</p>}
 
-      <button type="submit" className="botao-azul formulario-enviar">
-        Confirmar inscrição
+      <button type="submit" className="botao-azul formulario-enviar" disabled={enviando}>
+        {enviando ? "Salvando..." : "Confirmar inscrição"}
       </button>
 
       {visitanteCadastrado && (
@@ -210,6 +218,11 @@ function Formulario({ onCadastrar, mostrarQrCode = true, titulo, descricao }) {
           <p>
             Inscrição confirmada, <strong>{visitanteCadastrado.nome}</strong>!
           </p>
+          {visitanteCadastrado.salvoSomenteNesteDispositivo && (
+            <p className="formulario-erro">
+              O banco não respondeu: esta inscrição ficou salva somente neste dispositivo.
+            </p>
+          )}
           {mostrarQrCode && (
             <>
               <QRCodeVisitante codigo={visitanteCadastrado.codigoQr} tamanho={130} />

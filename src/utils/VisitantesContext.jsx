@@ -1,22 +1,28 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { gerarCodigoUnico } from "./gerarCodigo";
+import {
+  atualizarVisitanteNoBanco,
+  carregarDadosDaFeira,
+  criarVisitanteNoBanco,
+  registrarPresencaNoBanco,
+  removerVisitanteNoBanco,
+} from "../services/apiFeira";
 
 /*
- * Guarda visitantes e presenças por setor.
- * Os dados ficam no estado do React e são espelhados no localStorage
- * para não serem perdidos ao recarregar a página durante o evento.
+ * Estado compartilhado da feira.
+ * O banco D1 é a fonte oficial. localStorage é mantido somente como contingência
+ * para continuar o credenciamento caso a conexão caia durante o evento.
  */
 const VisitantesContext = createContext(null);
-
 const CHAVE_VISITANTES = "feira2026-visitantes";
 const CHAVE_PRESENCAS = "feira2026-presencas";
 
 function lerLocal(chave) {
   try {
     const bruto = window.localStorage.getItem(chave);
-    return bruto ? JSON.parse(bruto) : null;
+    return bruto ? JSON.parse(bruto) : [];
   } catch {
-    return null;
+    return [];
   }
 }
 
@@ -24,42 +30,67 @@ export function VisitantesProvider({ children }) {
   const [visitantes, setVisitantes] = useState([]);
   const [presencas, setPresencas] = useState([]);
   const [hidratado, setHidratado] = useState(false);
+  const [bancoConectado, setBancoConectado] = useState(false);
 
-  /* Leitura do localStorage só no navegador, depois da hidratação */
-  useEffect(() => {
-    setVisitantes(lerLocal(CHAVE_VISITANTES) || []);
-    setPresencas(lerLocal(CHAVE_PRESENCAS) || []);
-    setHidratado(true);
+  const carregarDoBanco = useCallback(async () => {
+    const dados = await carregarDadosDaFeira();
+    setVisitantes(dados.visitantes || []);
+    setPresencas(dados.presencas || []);
+    setBancoConectado(true);
+    return dados;
   }, []);
 
   useEffect(() => {
-    if (!hidratado) return;
-    window.localStorage.setItem(CHAVE_VISITANTES, JSON.stringify(visitantes));
+    setVisitantes(lerLocal(CHAVE_VISITANTES));
+    setPresencas(lerLocal(CHAVE_PRESENCAS));
+    setHidratado(true);
+
+    // A lista completa requer login; falhar aqui é normal na página pública.
+    carregarDoBanco().catch(() => setBancoConectado(false));
+    const atualizarAoEntrar = () => carregarDoBanco().catch(() => setBancoConectado(false));
+    window.addEventListener("feira2026-autorizacao", atualizarAoEntrar);
+    return () => window.removeEventListener("feira2026-autorizacao", atualizarAoEntrar);
+  }, [carregarDoBanco]);
+
+  useEffect(() => {
+    if (hidratado) window.localStorage.setItem(CHAVE_VISITANTES, JSON.stringify(visitantes));
   }, [visitantes, hidratado]);
 
   useEffect(() => {
-    if (!hidratado) return;
-    window.localStorage.setItem(CHAVE_PRESENCAS, JSON.stringify(presencas));
+    if (hidratado) window.localStorage.setItem(CHAVE_PRESENCAS, JSON.stringify(presencas));
   }, [presencas, hidratado]);
 
-  function adicionarVisitante(dados) {
+  async function adicionarVisitante(dados) {
     const novoVisitante = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: `vis-${crypto.randomUUID()}`,
       ...dados,
       codigoQr: gerarCodigoUnico(),
       criadoEm: new Date().toISOString(),
     };
-    setVisitantes((lista) => [...lista, novoVisitante]);
-    return novoVisitante;
+    try {
+      const resposta = await criarVisitanteNoBanco(novoVisitante);
+      const salvo = resposta.visitante || novoVisitante;
+      setVisitantes((lista) => [salvo, ...lista.filter((item) => item.id !== salvo.id)]);
+      setBancoConectado(true);
+      return salvo;
+    } catch (erro) {
+      // Mantém a inscrição no dispositivo se o banco/rede estiver indisponível.
+      // A mensagem permite à equipe saber que precisa sincronizá-la depois.
+      setVisitantes((lista) => [novoVisitante, ...lista]);
+      setBancoConectado(false);
+      return { ...novoVisitante, salvoSomenteNesteDispositivo: true, avisoBanco: erro.message };
+    }
   }
 
-  function atualizarVisitante(id, dados) {
-    setVisitantes((lista) =>
-      lista.map((visitante) => (visitante.id === id ? { ...visitante, ...dados } : visitante)),
-    );
+  async function atualizarVisitante(id, dados) {
+    const resposta = await atualizarVisitanteNoBanco(id, dados);
+    const salvo = resposta.visitante;
+    setVisitantes((lista) => lista.map((visitante) => (visitante.id === id ? salvo : visitante)));
+    return salvo;
   }
 
-  function removerVisitante(id) {
+  async function removerVisitante(id) {
+    await removerVisitanteNoBanco(id);
     setVisitantes((lista) => lista.filter((visitante) => visitante.id !== id));
     setPresencas((lista) => lista.filter((presenca) => presenca.visitanteId !== id));
   }
@@ -68,32 +99,12 @@ export function VisitantesProvider({ children }) {
     return visitantes.find((visitante) => visitante.codigoQr === codigo) || null;
   }
 
-  /*
-   * Registra a presença de um visitante em um setor de atração.
-   * Evita contar a mesma pessoa duas vezes no mesmo setor.
-   */
-  function registrarPresenca(codigo, setor) {
-    const visitante = buscarPorCodigo(codigo);
-    if (!visitante) {
-      return { status: "desconhecido", visitante: null };
+  async function registrarPresenca(codigoQr, setor) {
+    const retorno = await registrarPresencaNoBanco(codigoQr, setor);
+    if (retorno.status === "registrado" && retorno.presenca) {
+      setPresencas((lista) => [retorno.presenca, ...lista]);
     }
-
-    const jaRegistrado = presencas.some(
-      (presenca) => presenca.visitanteId === visitante.id && presenca.setor === setor,
-    );
-    if (jaRegistrado) {
-      return { status: "repetido", visitante };
-    }
-
-    const presenca = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      visitanteId: visitante.id,
-      codigoQr: codigo,
-      setor,
-      registradoEm: new Date().toISOString(),
-    };
-    setPresencas((lista) => [presenca, ...lista]);
-    return { status: "registrado", visitante, presenca };
+    return retorno;
   }
 
   return (
@@ -101,11 +112,13 @@ export function VisitantesProvider({ children }) {
       value={{
         visitantes,
         presencas,
+        bancoConectado,
         adicionarVisitante,
         atualizarVisitante,
         removerVisitante,
         buscarPorCodigo,
         registrarPresenca,
+        carregarDoBanco,
       }}
     >
       {children}

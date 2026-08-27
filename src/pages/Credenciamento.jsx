@@ -12,7 +12,7 @@ import { canaisDivulgacao, generos, vinculos } from "../data/setores";
 import { cursos } from "../data/cursos";
 import { abrirJanelaImpressao, compartilharCredencial } from "../utils/impressao";
 import "../css/admin.css";
-import '../css/credenciamento.css'
+import "../css/credenciamento.css";
 
 const abas = [
   { id: "visitantes", nome: "Visitantes" },
@@ -24,13 +24,20 @@ const abas = [
 const nomesDeCursos = Array.from(new Set(cursos.map((curso) => curso.nome)));
 
 function PainelCredenciamento({ sair }) {
-  const { visitantes, presencas, adicionarVisitante, atualizarVisitante, removerVisitante } =
-    useVisitantes();
+  const {
+    visitantes,
+    presencas,
+    bancoConectado,
+    adicionarVisitante,
+    atualizarVisitante,
+    removerVisitante,
+  } = useVisitantes();
   const [abaAtiva, setAbaAtiva] = useState("visitantes");
   const [busca, setBusca] = useState("");
   const [visitanteQrCode, setVisitanteQrCode] = useState(null);
   const [visitanteEdicao, setVisitanteEdicao] = useState(null);
   const [visitanteExclusao, setVisitanteExclusao] = useState(null);
+  const [erroOperacao, setErroOperacao] = useState("");
 
   const termos = busca.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const visitantesFiltrados = visitantes.filter((visitante) => {
@@ -50,10 +57,14 @@ function PainelCredenciamento({ sair }) {
     return termos.every((termo) => alvo.includes(termo));
   });
 
-  function salvarEdicao(evento) {
+  async function salvarEdicao(evento) {
     evento.preventDefault();
-    atualizarVisitante(visitanteEdicao.id, visitanteEdicao);
-    setVisitanteEdicao(null);
+    try {
+      await atualizarVisitante(visitanteEdicao.id, visitanteEdicao);
+      setVisitanteEdicao(null);
+    } catch (erro) {
+      setErroOperacao(erro.message || "Não foi possível atualizar o visitante no banco.");
+    }
   }
 
   function alterarCampoEdicao(evento) {
@@ -61,9 +72,13 @@ function PainelCredenciamento({ sair }) {
     setVisitanteEdicao((anterior) => ({ ...anterior, [name]: value }));
   }
 
-  function confirmarExclusao() {
-    removerVisitante(visitanteExclusao.id);
-    setVisitanteExclusao(null);
+  async function confirmarExclusao() {
+    try {
+      await removerVisitante(visitanteExclusao.id);
+      setVisitanteExclusao(null);
+    } catch (erro) {
+      setErroOperacao(erro.message || "Não foi possível excluir o visitante do banco.");
+    }
   }
 
   function imprimirCracha(visitante) {
@@ -100,6 +115,12 @@ function PainelCredenciamento({ sair }) {
       </header>
 
       <div className="container">
+        <p className={bancoConectado ? "admin-banco-status conectado" : "admin-banco-status"}>
+          {bancoConectado
+            ? "Banco de dados conectado: novos cadastros e presenças serão sincronizados."
+            : "Banco de dados não confirmado: verifique o binding DB antes de iniciar o credenciamento."}
+        </p>
+        {erroOperacao && <p className="formulario-erro">{erroOperacao}</p>}
         <div className="admin-resumo">
           <div className="admin-resumo-card">
             <span className="admin-resumo-numero">{visitantes.length}</span>

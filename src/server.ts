@@ -1,6 +1,7 @@
 import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { responderApiFeira } from "./server/apiFeira";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -121,6 +122,14 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const { pathname } = new URL(request.url);
+      // Rotas do banco são tratadas antes do SSR. A API decide quais operações
+      // são públicas (inscrição) e quais exigem a credencial da equipe.
+      const respostaApi = await responderApiFeira(
+        request,
+        env,
+        hasRestrictedAreaAccess(request, env),
+      );
+      if (respostaApi) return respostaApi;
       // A tela da área restrita precisa carregar sem autenticação para exibir
       // o formulário. Apenas a requisição de validação disparada por ele é
       // protegida aqui; bloquear toda a rota criava um ciclo em que o login

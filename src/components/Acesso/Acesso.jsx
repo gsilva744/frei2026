@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import logoFeira from "../../assets/logoFrei.png";
+import { guardarAutorizacaoDoBanco, removerAutorizacaoDoBanco } from "../../services/apiFeira";
 import "./acesso.css";
 
 function AreaRestrita({ titulo, descricao, children }) {
@@ -34,6 +35,9 @@ function AreaRestrita({ titulo, descricao, children }) {
         return;
       }
 
+      // A mesma autorização é enviada apenas às rotas protegidas da API do banco
+      // durante esta sessão. Ela é apagada ao sair e ao fechar o navegador.
+      guardarAutorizacaoDoBanco(usuario.trim(), senha);
       setSenha("");
       setLiberado(true);
     } catch {
@@ -44,6 +48,7 @@ function AreaRestrita({ titulo, descricao, children }) {
   }
 
   function sair() {
+    removerAutorizacaoDoBanco();
     setUsuario("");
     setSenha("");
     setLiberado(false);
