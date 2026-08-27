@@ -1,9 +1,9 @@
 /*
  * API do banco de dados da Feira.
  *
- * O binding `DB` é um Cloudflare D1. Todos os dados enviados pelo navegador
- * estão documentados junto à rota correspondente. Nenhuma instrução SQL fica
- * nos componentes visuais, o que deixa a manutenção concentrada neste arquivo.
+ * O binding `DB` Ã© um Cloudflare D1. Todos os dados enviados pelo navegador
+ * estÃ£o documentados junto Ã  rota correspondente. Nenhuma instruÃ§Ã£o SQL fica
+ * nos componentes visuais, o que deixa a manutenÃ§Ã£o concentrada neste arquivo.
  */
 type D1Statement = {
   bind: (...values: unknown[]) => D1Statement;
@@ -68,8 +68,8 @@ function visitanteParaCliente(linha: VisitanteLinha) {
     genero: linha.genero,
     cursoInteresse: linha.curso_interesse,
     codigoQr: linha.codigo_qr,
-    // A imagem SVG é retornada para uma futura tela de exportação/reimpressão;
-    // a interface atual continua renderizando o QR pelo código único.
+    // A imagem SVG Ã© retornada para uma futura tela de exportaÃ§Ã£o/reimpressÃ£o;
+    // a interface atual continua renderizando o QR pelo cÃ³digo Ãºnico.
     qrCodeSvg: linha.qr_code_svg,
     criadoEm: linha.criado_em,
     atualizadoEm: linha.atualizado_em,
@@ -104,10 +104,10 @@ async function corpoJson(request: Request) {
 
 function dadosValidos(dados: Record<string, unknown>) {
   const cpf = texto(dados.cpf, 20).replace(/\D/g, "");
-  if (texto(dados.nome, 100).length < 3) return "Nome inválido.";
-  if (cpf.length !== 11) return "CPF deve ter 11 dígitos.";
-  if (texto(dados.email, 255).length < 3) return "E-mail inválido.";
-  if (texto(dados.telefone, 30).replace(/\D/g, "").length < 10) return "Telefone inválido.";
+  if (texto(dados.nome, 100).length < 3) return "Nome invÃ¡lido.";
+  if (cpf.length !== 11) return "CPF deve ter 11 dÃ­gitos.";
+  if (texto(dados.email, 255).length < 3) return "E-mail invÃ¡lido.";
+  if (texto(dados.telefone, 30).replace(/\D/g, "").length < 10) return "Telefone invÃ¡lido.";
   return null;
 }
 
@@ -119,17 +119,17 @@ export async function responderApiFeira(
   const url = new URL(request.url);
   if (!url.pathname.startsWith("/api/feira")) return null;
 
-  const db = (env as AmbienteComBanco | undefined)?.DB;
+  const db = getMySqlDatabase(env);
   if (!db) {
-    return json({ erro: "Banco não configurado. Crie o binding D1 chamado DB." }, 503);
+    return json({ erro: "Banco nÃ£o configurado. Crie o binding D1 chamado DB." }, 503);
   }
 
   const rota = url.pathname.slice("/api/feira".length);
   const agora = new Date().toISOString();
 
-  // GET /dados (restrita): retorna todos os visitantes e presenças para painel e leitor QR.
+  // GET /dados (restrita): retorna todos os visitantes e presenÃ§as para painel e leitor QR.
   if (request.method === "GET" && rota === "/dados") {
-    if (!autorizado) return json({ erro: "Autenticação necessária." }, 401);
+    if (!autorizado) return json({ erro: "AutenticaÃ§Ã£o necessÃ¡ria." }, 401);
     const [visitantes, presencas] = await Promise.all([
       db.prepare("SELECT * FROM visitantes ORDER BY criado_em DESC").all<VisitanteLinha>(),
       db.prepare("SELECT * FROM presencas ORDER BY registrado_em DESC").all<PresencaLinha>(),
@@ -140,10 +140,10 @@ export async function responderApiFeira(
     });
   }
 
-  // POST /visitantes (pública): recebe os dados do formulário e a imagem SVG do QR Code.
+  // POST /visitantes (pÃºblica): recebe os dados do formulÃ¡rio e a imagem SVG do QR Code.
   if (request.method === "POST" && rota === "/visitantes") {
     const dados = await corpoJson(request);
-    if (!dados) return json({ erro: "JSON inválido." }, 400);
+    if (!dados) return json({ erro: "JSON invÃ¡lido." }, 400);
     const erro = dadosValidos(dados);
     if (erro) return json({ erro }, 400);
     const visitante = {
@@ -160,7 +160,7 @@ export async function responderApiFeira(
       qrCodeSvg: texto(dados.qrCodeSvg, 30000),
       criadoEm: texto(dados.criadoEm, 40) || agora,
     };
-    if (!visitante.codigoQr) return json({ erro: "Código QR ausente." }, 400);
+    if (!visitante.codigoQr) return json({ erro: "CÃ³digo QR ausente." }, 400);
     try {
       await db
         .prepare(
@@ -189,16 +189,16 @@ export async function responderApiFeira(
         .first<VisitanteLinha>();
       return json({ visitante: salvo && visitanteParaCliente(salvo) }, 201);
     } catch {
-      return json({ erro: "Já existe um visitante com este CPF ou código QR." }, 409);
+      return json({ erro: "JÃ¡ existe um visitante com este CPF ou cÃ³digo QR." }, 409);
     }
   }
 
   const idVisitante = rota.match(/^\/visitantes\/([^/]+)$/)?.[1];
-  // PATCH /visitantes/:id (restrita): recebe somente os campos editáveis mostrados na tela.
+  // PATCH /visitantes/:id (restrita): recebe somente os campos editÃ¡veis mostrados na tela.
   if (request.method === "PATCH" && idVisitante) {
-    if (!autorizado) return json({ erro: "Autenticação necessária." }, 401);
+    if (!autorizado) return json({ erro: "AutenticaÃ§Ã£o necessÃ¡ria." }, 401);
     const dados = await corpoJson(request);
-    if (!dados) return json({ erro: "JSON inválido." }, 400);
+    if (!dados) return json({ erro: "JSON invÃ¡lido." }, 400);
     const pares = CAMPOS_EDITAVEIS.filter((campo) => campo in dados);
     if (!pares.length) return json({ erro: "Nenhum campo para atualizar." }, 400);
     const colunas: Record<(typeof CAMPOS_EDITAVEIS)[number], string> = {
@@ -224,24 +224,24 @@ export async function responderApiFeira(
       .first<VisitanteLinha>();
     return salvo
       ? json({ visitante: visitanteParaCliente(salvo) })
-      : json({ erro: "Visitante não encontrado." }, 404);
+      : json({ erro: "Visitante nÃ£o encontrado." }, 404);
   }
 
-  // DELETE /visitantes/:id (restrita): remove visitante; o SQL remove presenças em cascata.
+  // DELETE /visitantes/:id (restrita): remove visitante; o SQL remove presenÃ§as em cascata.
   if (request.method === "DELETE" && idVisitante) {
-    if (!autorizado) return json({ erro: "Autenticação necessária." }, 401);
+    if (!autorizado) return json({ erro: "AutenticaÃ§Ã£o necessÃ¡ria." }, 401);
     const resultado = await db
       .prepare("DELETE FROM visitantes WHERE id = ?")
       .bind(decodeURIComponent(idVisitante))
       .run();
     return resultado.meta.changes
       ? json({ removido: true })
-      : json({ erro: "Visitante não encontrado." }, 404);
+      : json({ erro: "Visitante nÃ£o encontrado." }, 404);
   }
 
-  // POST /presencas (restrita): recebe código QR + setor; data e identificador são gerados no servidor.
+  // POST /presencas (restrita): recebe cÃ³digo QR + setor; data e identificador sÃ£o gerados no servidor.
   if (request.method === "POST" && rota === "/presencas") {
-    if (!autorizado) return json({ erro: "Autenticação necessária." }, 401);
+    if (!autorizado) return json({ erro: "AutenticaÃ§Ã£o necessÃ¡ria." }, 401);
     const dados = await corpoJson(request);
     const codigoQr = texto(dados?.codigoQr, 120);
     const setor = texto(dados?.setor, 50);
@@ -255,7 +255,7 @@ export async function responderApiFeira(
     const id = idNovo("pre");
     const insercao = await db
       .prepare(
-        "INSERT OR IGNORE INTO presencas (id, visitante_id, codigo_qr, setor, registrado_em) VALUES (?, ?, ?, ?, ?)",
+        "INSERT IGNORE INTO presencas (id, visitante_id, codigo_qr, setor, registrado_em) VALUES (?, ?, ?, ?, ?)",
       )
       .bind(id, visitante.id, codigoQr, setor, agora)
       .run();
@@ -275,5 +275,5 @@ export async function responderApiFeira(
     );
   }
 
-  return json({ erro: "Rota da API não encontrada." }, 404);
+  return json({ erro: "Rota da API nÃ£o encontrada." }, 404);
 }

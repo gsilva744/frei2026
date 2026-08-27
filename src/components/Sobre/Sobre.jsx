@@ -1,5 +1,5 @@
 import sobre1 from "../../assets/sobre-1.webp";
-import sobre2 from "../../assets/sobre2.jpg";
+import sobre2 from "../../assets/sobre2.webp";
 import "./sobre.css";
 
 function Sobre() {
@@ -24,7 +24,14 @@ function Sobre() {
               Nossa equipe está pronta para receber você e mostrar que o conhecimento, o trabalho em
               equipe e o compromisso com as pessoas fazem a diferença na formação de cada estudante.
             </p>
-            <a href="https://www.acaonsfatima.org.br/escola-prof-nossa-senhora-de-f%C3%A1tima" target="_blank" >FASDFW</a>
+            
+            
+              <a href="https://www.acaonsfatima.org.br/sobre-n%C3%B3s" target="_blank" >
+                <button className="botao-azul">
+                  Conheça nossa escola
+                </button>
+              </a>
+          
           </div>
         </div>
 

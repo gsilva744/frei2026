@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import logoFeira from "../../assets/logoFrei.png";
+import logo1 from "../../assets/logoFrei.png";
+import logo2 from "../../assets/logo2.png";
 import "./header.css";
 
 const itensMenu = [
@@ -33,12 +34,8 @@ function Header({ onAbrirAreaRestrita }) {
     <header className={reduzido ? "header header-reduzido" : "header"}>
       <div className="header-conteudo">
         <a className="header-logo" href="#inicio">
-          <img src={logoFeira} alt="Logo da 6ª Feira das Profissões" />
-          <span className="header-logo-texto">
-            Instituto Social
-            <br />
-            Nossa Senhora de Fátima
-          </span>
+          <img src={logo1} alt="Logo da 6ª Feira das Profissões" className="logo1"/>
+          <img src={logo2} alt="Logo da 6ª Feira das Profissões" className="logo2"/>
         </a>
 
         <nav className={menuAberto ? "header-menu header-menu-aberto" : "header-menu"}>

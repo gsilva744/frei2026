@@ -25,7 +25,6 @@
   color: var(--texto-claro);
   text-align: justify;
   line-height: 2.2;
-  
 }
 
 .sobre-acao {
@@ -55,4 +54,6 @@
   align-items: center;
   justify-content: center;
   flex-direction: column;
+  gap: 20px;
+  height: 100%;
 }

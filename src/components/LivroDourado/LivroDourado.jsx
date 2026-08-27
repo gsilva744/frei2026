@@ -1,4 +1,4 @@
-import livroDourado from "../../assets/livro-dourado.jpg";
+import livroDourado from "../../assets/freiEPessoas.webp";
 import "./livro-dourado.css";
 
 const passos = [

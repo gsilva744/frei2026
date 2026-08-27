@@ -17,7 +17,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  background-color: rgba(255, 255, 255, 0.253);
+  background-color: rgba(255, 255, 255, 0.356);
   width: 80%;
   margin: auto;
   padding: 5px 10px;
@@ -31,17 +31,6 @@
   color: var(--branco);
 }
 
-.header-logo-marca {
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
-  color: var(--azul);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: bold;
-}
 
 .header-logo-texto {
   font-size: 15px;
@@ -129,13 +118,12 @@
   }
 }
 
-.header-logo img {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-  background-color: var(--branco);
-  border-radius: 50%;
-  padding: 3px;
+.logo1 {
+  width: 60px;
+}
+
+.logo2 {
+  width: 130px;
 }
 
 .header-logo-texto {
