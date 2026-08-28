@@ -48,12 +48,86 @@ function Formulario({ onCadastrar, mostrarQrCode = true, titulo, descricao }) {
     setCampos((anterior) => ({ ...anterior, [name]: tratado }));
   }
 
+  
+  function baixarQrCode() {
+    const svg = document.querySelector("#qr-code-visitante svg");
+
+    if (!svg || !visitanteCadastrado?.codigoQr) {
+      setErro("Não foi possível gerar o arquivo do QR Code.");
+      return;
+    }
+
+    const svgClone = svg.cloneNode(true);
+
+    svgClone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    svgClone.setAttribute("width", "500");
+    svgClone.setAttribute("height", "500");
+
+    const serializer = new XMLSerializer();
+    const svgString = serializer.serializeToString(svgClone);
+
+    const svgBlob = new Blob([svgString], {
+      type: "image/svg+xml;charset=utf-8",
+    });
+
+    const url = URL.createObjectURL(svgBlob);
+
+    const imagem = new Image();
+
+    imagem.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 500;
+      canvas.height = 500;
+
+      const contexto = canvas.getContext("2d");
+
+      if (!contexto) {
+        URL.revokeObjectURL(url);
+        setErro("Não foi possível criar a imagem do QR Code.");
+        return;
+      }
+
+      contexto.fillStyle = "#FFFFFF";
+      contexto.fillRect(0, 0, 500, 500);
+
+      contexto.drawImage(imagem, 0, 0, 500, 500);
+
+      URL.revokeObjectURL(url);
+
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          setErro("Não foi possível baixar o QR Code.");
+          return;
+        }
+
+        const link = document.createElement("a");
+
+        link.href = URL.createObjectURL(blob);
+        link.download = `qrcode-${visitanteCadastrado.codigoQr}.png`;
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        URL.revokeObjectURL(link.href);
+      }, "image/png");
+    };
+
+    imagem.onerror = () => {
+      URL.revokeObjectURL(url);
+      setErro("Não foi possível gerar o QR Code.");
+    };
+
+    imagem.src = url;
+  }
+
+
   async function enviarFormulario(evento) {
     evento.preventDefault();
     const nome = campos.nome.trim();
     if (nome.length < 3 || nome.length > 100) {
       setErro("Informe o nome completo (3 a 100 caracteres).");
-      return;
+      return; 
     }
     if (campos.cpf.replace(/\D/g, "").length !== 11) {
       setErro("Informe um CPF com 11 dígitos.");
@@ -213,26 +287,36 @@ function Formulario({ onCadastrar, mostrarQrCode = true, titulo, descricao }) {
         {enviando ? "Salvando..." : "Confirmar inscrição"}
       </button>
 
-      {visitanteCadastrado && (
-        <div className="formulario-mensagem">
-          <p>
-            Inscrição confirmada, <strong>{visitanteCadastrado.nome}</strong>!
-          </p>
-          {visitanteCadastrado.salvoSomenteNesteDispositivo && (
-            <p className="formulario-erro">
-              O banco não respondeu: esta inscrição ficou salva somente neste dispositivo.
+      {visitanteCadastrado && ( 
+        <div className="formulario-mensagem"> 
+        <p> Inscrição confirmada, 
+          <strong>{visitanteCadastrado.nome}</strong>! 
+        </p> 
+        
+        {visitanteCadastrado.salvoSomenteNesteDispositivo && ( 
+          
+          <p className="formulario-erro"> O banco não respondeu: esta inscrição ficou salva somente neste dispositivo. </p>
+          )} 
+          
+          {mostrarQrCode && ( 
+            <> <div id="qr-code-visitante"> <QRCodeVisitante codigo={visitanteCadastrado.codigoQr} tamanho={180} /> 
+            
+            </div>
+            
+            <p className="formulario-codigo"> {visitanteCadastrado.codigoQr} </p> 
+            
+            <button type="button" className="botao-azul formulario-baixar-qr" onClick={baixarQrCode} > Baixar meu QR Code </button> 
+            <br />
+            <p className="formulario-instrucao">
+              Guarde este QR Code. Ele será utilizado para registrar sua presença na feira.
             </p>
+            
+            </> )} 
+            </div> 
           )}
-          {mostrarQrCode && (
-            <>
-              <QRCodeVisitante codigo={visitanteCadastrado.codigoQr} tamanho={130} />
-              <p className="formulario-codigo">{visitanteCadastrado.codigoQr}</p>
-            </>
-          )}
-        </div>
-      )}
-    </form>
-  );
-}
+
+            </form>
+          );
+        }
 
 export default Formulario;
