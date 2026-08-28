@@ -328,3 +328,9 @@ a.botao-amarelo {
   gap: 10px;
   flex-wrap: wrap;
 }
+
+
+.formulario-campo select {
+  width: 100%;
+  box-sizing: border-box;
+}

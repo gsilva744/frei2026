@@ -7,3 +7,12 @@
 .formulario-card input, .formulario-card select {
     width: 100%;
 }
+
+#edicao-colaborador {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.isabele {
+    width: 100%;
+}

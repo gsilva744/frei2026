@@ -69,9 +69,25 @@ function PainelCredenciamento({ sair }) {
 
   function alterarCampoEdicao(evento) {
     const { name, value } = evento.target;
-    setVisitanteEdicao((anterior) => ({ ...anterior, [name]: value }));
-  }
 
+    if (name === "vinculo") {
+      setVisitanteEdicao((anterior) => ({
+        ...anterior,
+        vinculo: value,
+        participaComoColaborador:
+          value === "Aluno atual"
+            ? Boolean(anterior.participaComoColaborador)
+            : false,
+      }));
+
+      return;
+    }
+
+    setVisitanteEdicao((anterior) => ({
+      ...anterior,
+      [name]: value,
+    }));
+  }
   async function confirmarExclusao() {
     try {
       await removerVisitante(visitanteExclusao.id);
@@ -177,6 +193,7 @@ function PainelCredenciamento({ sair }) {
                       <th>Curso de interesse</th>
                       <th>Gênero</th>
                       <th>Vínculo</th>
+                      <th>Colaborador</th>
                       <th>Ações</th>
                     </tr>
                   </thead>
@@ -197,6 +214,9 @@ function PainelCredenciamento({ sair }) {
                         <td>{visitante.cursoInteresse}</td>
                         <td>{visitante.genero}</td>
                         <td>{visitante.vinculo}</td>
+                        <td>
+                          {visitante.participaComoColaborador ? "Sim" : "Não"}
+                        </td>
                         <td>
                           <div className="admin-acoes">
                             <button
@@ -295,119 +315,34 @@ function PainelCredenciamento({ sair }) {
         </Modal>
       )}
 
-      {visitanteEdicao && (
-        <Modal titulo="Editar visitante" onFechar={() => setVisitanteEdicao(null)}>
-          <form onSubmit={salvarEdicao}>
-            <div className="formulario-campo">
-              <label htmlFor="edicao-nome">Nome</label>
-              <input
-                id="edicao-nome"
-                name="nome"
-                value={visitanteEdicao.nome || ""}
-                onChange={alterarCampoEdicao}
-                required
-              />
-            </div>
-            <div className="formulario-campo">
-              <label htmlFor="edicao-email">E-mail</label>
-              <input
-                id="edicao-email"
-                name="email"
-                type="email"
-                value={visitanteEdicao.email || ""}
-                onChange={alterarCampoEdicao}
-              />
-            </div>
-            <div className="formulario-campo">
-              <label htmlFor="edicao-telefone">Telefone</label>
-              <input
-                id="edicao-telefone"
-                name="telefone"
-                value={visitanteEdicao.telefone || ""}
-                onChange={alterarCampoEdicao}
-              />
-            </div>
-            <div className="formulario-campo">
-              <label htmlFor="edicao-cpf">CPF</label>
-              <input
-                id="edicao-cpf"
-                name="cpf"
-                value={visitanteEdicao.cpf || ""}
-                onChange={alterarCampoEdicao}
-              />
-            </div>
-            <div className="formulario-campo">
-              <label htmlFor="edicao-curso">Curso de interesse</label>
-              <select
-                id="edicao-curso"
-                name="cursoInteresse"
-                value={visitanteEdicao.cursoInteresse || ""}
-                onChange={alterarCampoEdicao}
-              >
-                <option value="">Selecione</option>
-                {nomesDeCursos.map((nome) => (
-                  <option key={nome} value={nome}>
-                    {nome}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="formulario-campo">
-              <label htmlFor="edicao-genero">Gênero</label>
-              <select
-                id="edicao-genero"
-                name="genero"
-                value={visitanteEdicao.genero || ""}
-                onChange={alterarCampoEdicao}
-              >
-                <option value="">Selecione</option>
-                {generos.map((genero) => (
-                  <option key={genero} value={genero}>
-                    {genero}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="formulario-campo">
-              <label htmlFor="edicao-vinculo">Vínculo</label>
-              <select
-                id="edicao-vinculo"
-                name="vinculo"
-                value={visitanteEdicao.vinculo || ""}
-                onChange={alterarCampoEdicao}
-              >
-                <option value="">Selecione</option>
-                {vinculos.map((vinculo) => (
-                  <option key={vinculo} value={vinculo}>
-                    {vinculo}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="formulario-campo">
-              <label htmlFor="edicao-canal">Como soube da feira</label>
-              <select
-                id="edicao-canal"
-                name="comoSoube"
-                value={visitanteEdicao.comoSoube || ""}
-                onChange={alterarCampoEdicao}
-              >
-                <option value="">Selecione</option>
-                {canaisDivulgacao.map((canal) => (
-                  <option key={canal} value={canal}>
-                    {canal}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="admin-modal-botoes">
-              <button type="submit" className="botao-azul">
-                Salvar alterações
-              </button>
-            </div>
-          </form>
-        </Modal>
-      )}
+      {visitanteEdicao?.vinculo === "Aluno atual" && (
+  <div className="formulario-campo isabele">
+    <label htmlFor="edicao-colaborador">
+      Participa como colaborador?
+    </label>
+
+    <select
+      className="isabele"
+      id="edicao-colaborador"
+      name="participaComoColaborador"
+      value={
+        visitanteEdicao?.participaComoColaborador
+          ? "true"
+          : "false"
+      }
+      onChange={(evento) =>
+        setVisitanteEdicao((anterior) => ({
+          ...anterior,
+          participaComoColaborador:
+            evento.target.value === "true",
+        }))
+      }
+    >
+      <option value="true">Sim</option>
+      <option value="false">Não</option>
+    </select>
+  </div>
+)}
 
       {visitanteExclusao && (
         <Modal titulo="Excluir visitante" onFechar={() => setVisitanteExclusao(null)}>

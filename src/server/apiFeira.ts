@@ -1,10 +1,13 @@
 /*
- * API do banco de dados da Feira.
+ * API da Feira de Profissões.
  *
- * O binding `DB` Ã© um Cloudflare D1. Todos os dados enviados pelo navegador
- * estÃ£o documentados junto Ã  rota correspondente. Nenhuma instruÃ§Ã£o SQL fica
- * nos componentes visuais, o que deixa a manutenÃ§Ã£o concentrada neste arquivo.
+ * Banco utilizado: MySQL.
+ * O acesso ao banco é feito pelo adaptador getMySqlDatabase(),
+ * mantendo uma interface semelhante à API anterior baseada em D1.
  */
+
+import { getMySqlDatabase } from "./mysql";
+
 type D1Statement = {
   bind: (...values: unknown[]) => D1Statement;
   run: () => Promise<{ meta: { changes?: number } }>;
@@ -12,8 +15,9 @@ type D1Statement = {
   first: <T>() => Promise<T | null>;
 };
 
-type D1Database = { prepare: (query: string) => D1Statement };
-type AmbienteComBanco = { DB?: D1Database };
+type D1Database = {
+  prepare: (query: string) => D1Statement;
+};
 
 type VisitanteLinha = {
   id: string;
@@ -30,6 +34,7 @@ type VisitanteLinha = {
   criado_em: string;
   atualizado_em: string;
 };
+
 type PresencaLinha = {
   id: string;
   visitante_id: string;
@@ -49,12 +54,135 @@ const CAMPOS_EDITAVEIS = [
   "cursoInteresse",
 ] as const;
 
+const COLUNAS_EDITAVEIS: Record<(typeof CAMPOS_EDITAVEIS)[number], string> = {
+  nome: "nome",
+  email: "email",
+  cpf: "cpf",
+  telefone: "telefone",
+  vinculo: "vinculo",
+  comoSoube: "como_soube",
+  genero: "genero",
+  cursoInteresse: "curso_interesse",
+};
+
+const LIMITE_QR_SVG = 30000;
+
+/* =========================
+   RESPOSTAS HTTP
+========================= */
+
 function json(dados: unknown, status = 200) {
   return new Response(JSON.stringify(dados), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store",
+    },
   });
 }
+
+function erro(mensagem: string, status: number) {
+  return json({ erro: mensagem }, status);
+}
+
+/* =========================
+   UTILITÁRIOS
+========================= */
+
+function idNovo(prefixo: string) {
+  return `${prefixo}-${crypto.randomUUID()}`;
+}
+
+function texto(valor: unknown, limite: number) {
+  if (typeof valor !== "string") return "";
+  return valor.trim().slice(0, limite);
+}
+
+function somenteDigitos(valor: unknown, limite: number) {
+  return texto(valor, limite).replace(/\D/g, "");
+}
+
+function normalizarEmail(valor: unknown) {
+  return texto(valor, 255).toLowerCase();
+}
+
+function normalizarCpf(valor: unknown) {
+  return somenteDigitos(valor, 20);
+}
+
+function normalizarTelefone(valor: unknown) {
+  return somenteDigitos(valor, 30);
+}
+
+function emailValido(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+/*
+ * Validação básica de CPF.
+ * Não aceita apenas 11 números repetidos.
+ */
+function cpfValido(cpf: string) {
+  if (cpf.length !== 11) return false;
+
+  if (/^(\d)\1{10}$/.test(cpf)) return false;
+
+  let soma = 0;
+
+  for (let i = 0; i < 9; i++) {
+    soma += Number(cpf[i]) * (10 - i);
+  }
+
+  let resto = (soma * 10) % 11;
+
+  if (resto === 10) resto = 0;
+
+  if (resto !== Number(cpf[9])) return false;
+
+  soma = 0;
+
+  for (let i = 0; i < 10; i++) {
+    soma += Number(cpf[i]) * (11 - i);
+  }
+
+  resto = (soma * 10) % 11;
+
+  if (resto === 10) resto = 0;
+
+  return resto === Number(cpf[10]);
+}
+
+function telefoneValido(telefone: string) {
+  return telefone.length >= 10 && telefone.length <= 11;
+}
+
+function codigoQrValido(codigoQr: string) {
+  return codigoQr.length >= 5 && codigoQr.length <= 120;
+}
+
+async function corpoJson(
+  request: Request,
+): Promise<Record<string, unknown> | null> {
+  try {
+    const dados = await request.json();
+
+    if (
+      !dados ||
+      typeof dados !== "object" ||
+      Array.isArray(dados)
+    ) {
+      return null;
+    }
+
+    return dados as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+/* =========================
+   CONVERSÃO BANCO -> CLIENTE
+========================= */
 
 function visitanteParaCliente(linha: VisitanteLinha) {
   return {
@@ -68,8 +196,6 @@ function visitanteParaCliente(linha: VisitanteLinha) {
     genero: linha.genero,
     cursoInteresse: linha.curso_interesse,
     codigoQr: linha.codigo_qr,
-    // A imagem SVG Ã© retornada para uma futura tela de exportaÃ§Ã£o/reimpressÃ£o;
-    // a interface atual continua renderizando o QR pelo cÃ³digo Ãºnico.
     qrCodeSvg: linha.qr_code_svg,
     criadoEm: linha.criado_em,
     atualizadoEm: linha.atualizado_em,
@@ -86,30 +212,112 @@ function presencaParaCliente(linha: PresencaLinha) {
   };
 }
 
-function idNovo(prefixo: string) {
-  return `${prefixo}-${crypto.randomUUID()}`;
-}
+/* =========================
+   CAMPOS DE VISITANTE
+========================= */
 
-function texto(valor: unknown, limite: number) {
-  return typeof valor === "string" ? valor.trim().slice(0, limite) : "";
-}
+function validarVisitante(
+  dados: Record<string, unknown>,
+  exigirQr = true,
+) {
+  const nome = texto(dados.nome, 100);
+  const email = normalizarEmail(dados.email);
+  const cpf = normalizarCpf(dados.cpf);
+  const telefone = normalizarTelefone(dados.telefone);
+  const vinculo = texto(dados.vinculo, 80);
+  const comoSoube = texto(dados.comoSoube, 100);
+  const genero = texto(dados.genero, 50);
+  const cursoInteresse = texto(dados.cursoInteresse, 150);
+  const codigoQr = texto(dados.codigoQr, 120);
+  const qrCodeSvg = texto(dados.qrCodeSvg, LIMITE_QR_SVG);
 
-async function corpoJson(request: Request) {
-  try {
-    return (await request.json()) as Record<string, unknown>;
-  } catch {
-    return null;
+  if (nome.length < 3) {
+    return {
+      erro: "Nome inválido.",
+      dados: null,
+    };
   }
+
+  if (!emailValido(email)) {
+    return {
+      erro: "E-mail inválido.",
+      dados: null,
+    };
+  }
+
+  if (!cpfValido(cpf)) {
+    return {
+      erro: "CPF inválido.",
+      dados: null,
+    };
+  }
+
+  if (!telefoneValido(telefone)) {
+    return {
+      erro: "Telefone inválido.",
+      dados: null,
+    };
+  }
+
+  if (exigirQr && !codigoQrValido(codigoQr)) {
+    return {
+      erro: "Código QR inválido.",
+      dados: null,
+    };
+  }
+
+  return {
+    erro: null,
+    dados: {
+      nome,
+      email,
+      cpf,
+      telefone,
+      vinculo,
+      comoSoube,
+      genero,
+      cursoInteresse,
+      codigoQr,
+      qrCodeSvg: qrCodeSvg || null,
+    },
+  };
 }
 
-function dadosValidos(dados: Record<string, unknown>) {
-  const cpf = texto(dados.cpf, 20).replace(/\D/g, "");
-  if (texto(dados.nome, 100).length < 3) return "Nome invÃ¡lido.";
-  if (cpf.length !== 11) return "CPF deve ter 11 dÃ­gitos.";
-  if (texto(dados.email, 255).length < 3) return "E-mail invÃ¡lido.";
-  if (texto(dados.telefone, 30).replace(/\D/g, "").length < 10) return "Telefone invÃ¡lido.";
-  return null;
+/* =========================
+   TRATAMENTO DE ERROS MYSQL
+========================= */
+
+function mensagemErroBanco(error: unknown) {
+  const codigo =
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error
+      ? String((error as { code?: unknown }).code)
+      : "";
+
+  if (codigo === "ER_DUP_ENTRY") {
+    return {
+      mensagem: "CPF ou código QR já cadastrado.",
+      status: 409,
+    };
+  }
+
+  if (codigo === "ER_NO_SUCH_TABLE") {
+    return {
+      mensagem: "As tabelas do banco de dados não foram encontradas.",
+      status: 500,
+    };
+  }
+
+  return {
+    mensagem: "Erro interno ao acessar o banco de dados.",
+    status: 500,
+  };
 }
+
+/* =========================
+   API PRINCIPAL
+========================= */
 
 export async function responderApiFeira(
   request: Request,
@@ -117,163 +325,556 @@ export async function responderApiFeira(
   autorizado: boolean,
 ): Promise<Response | null> {
   const url = new URL(request.url);
-  if (!url.pathname.startsWith("/api/feira")) return null;
+
+  if (!url.pathname.startsWith("/api/feira")) {
+    return null;
+  }
 
   const db = getMySqlDatabase(env);
+
   if (!db) {
-    return json({ erro: "Banco nÃ£o configurado. Crie o binding D1 chamado DB." }, 503);
+    return erro(
+      "Banco MySQL não configurado. Verifique as variáveis de ambiente.",
+      503,
+    );
   }
 
   const rota = url.pathname.slice("/api/feira".length);
   const agora = new Date().toISOString();
 
-  // GET /dados (restrita): retorna todos os visitantes e presenÃ§as para painel e leitor QR.
-  if (request.method === "GET" && rota === "/dados") {
-    if (!autorizado) return json({ erro: "AutenticaÃ§Ã£o necessÃ¡ria." }, 401);
-    const [visitantes, presencas] = await Promise.all([
-      db.prepare("SELECT * FROM visitantes ORDER BY criado_em DESC").all<VisitanteLinha>(),
-      db.prepare("SELECT * FROM presencas ORDER BY registrado_em DESC").all<PresencaLinha>(),
-    ]);
-    return json({
-      visitantes: visitantes.results.map(visitanteParaCliente),
-      presencas: presencas.results.map(presencaParaCliente),
-    });
-  }
+  /* =========================
+     GET /dados
+     ========================= */
 
-  // POST /visitantes (pÃºblica): recebe os dados do formulÃ¡rio e a imagem SVG do QR Code.
-  if (request.method === "POST" && rota === "/visitantes") {
-    const dados = await corpoJson(request);
-    if (!dados) return json({ erro: "JSON invÃ¡lido." }, 400);
-    const erro = dadosValidos(dados);
-    if (erro) return json({ erro }, 400);
-    const visitante = {
-      id: texto(dados.id, 80) || idNovo("vis"),
-      nome: texto(dados.nome, 100),
-      email: texto(dados.email, 255),
-      cpf: texto(dados.cpf, 20),
-      telefone: texto(dados.telefone, 30),
-      vinculo: texto(dados.vinculo, 80),
-      comoSoube: texto(dados.comoSoube, 100),
-      genero: texto(dados.genero, 50),
-      cursoInteresse: texto(dados.cursoInteresse, 150),
-      codigoQr: texto(dados.codigoQr, 120),
-      qrCodeSvg: texto(dados.qrCodeSvg, 30000),
-      criadoEm: texto(dados.criadoEm, 40) || agora,
-    };
-    if (!visitante.codigoQr) return json({ erro: "CÃ³digo QR ausente." }, 400);
+  if (request.method === "GET" && rota === "/dados") {
+    if (!autorizado) {
+      return erro("Autenticação necessária.", 401);
+    }
+
     try {
-      await db
-        .prepare(
-          `INSERT INTO visitantes (id, nome, email, cpf, telefone, vinculo, como_soube, genero, curso_interesse, codigo_qr, qr_code_svg, criado_em, atualizado_em)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        )
-        .bind(
-          visitante.id,
-          visitante.nome,
-          visitante.email,
-          visitante.cpf,
-          visitante.telefone,
-          visitante.vinculo,
-          visitante.comoSoube,
-          visitante.genero,
-          visitante.cursoInteresse,
-          visitante.codigoQr,
-          visitante.qrCodeSvg || null,
-          visitante.criadoEm,
-          agora,
-        )
-        .run();
-      const salvo = await db
-        .prepare("SELECT * FROM visitantes WHERE id = ?")
-        .bind(visitante.id)
-        .first<VisitanteLinha>();
-      return json({ visitante: salvo && visitanteParaCliente(salvo) }, 201);
-    } catch {
-      return json({ erro: "JÃ¡ existe um visitante com este CPF ou cÃ³digo QR." }, 409);
+      const [visitantes, presencas] = await Promise.all([
+        db
+          .prepare(
+            `
+            SELECT
+              id,
+              nome,
+              email,
+              cpf,
+              telefone,
+              vinculo,
+              como_soube,
+              genero,
+              curso_interesse,
+              codigo_qr,
+              qr_code_svg,
+              criado_em,
+              atualizado_em
+            FROM visitantes
+            ORDER BY criado_em DESC
+            `,
+          )
+          .all<VisitanteLinha>(),
+
+        db
+          .prepare(
+            `
+            SELECT
+              id,
+              visitante_id,
+              codigo_qr,
+              setor,
+              registrado_em
+            FROM presencas
+            ORDER BY registrado_em DESC
+            `,
+          )
+          .all<PresencaLinha>(),
+      ]);
+
+      return json({
+        visitantes: visitantes.results.map(visitanteParaCliente),
+        presencas: presencas.results.map(presencaParaCliente),
+      });
+    } catch (error) {
+      console.error("Erro em GET /dados:", error);
+
+      return erro(
+        "Não foi possível carregar os dados da feira.",
+        500,
+      );
     }
   }
 
-  const idVisitante = rota.match(/^\/visitantes\/([^/]+)$/)?.[1];
-  // PATCH /visitantes/:id (restrita): recebe somente os campos editÃ¡veis mostrados na tela.
+  /* =========================
+     POST /visitantes
+     ========================= */
+
+  if (request.method === "POST" && rota === "/visitantes") {
+    const dados = await corpoJson(request);
+
+    if (!dados) {
+      return erro("JSON inválido.", 400);
+    }
+
+    /*
+     * O servidor gera o ID e o código QR.
+     * Não confiamos nesses valores vindos do navegador.
+     */
+    const validacao = validarVisitante({
+      ...dados,
+      codigoQr: "",
+    }, false);
+
+    if (validacao.erro || !validacao.dados) {
+      return erro(validacao.erro ?? "Dados inválidos.", 400);
+    }
+
+    const id = idNovo("vis");
+
+    /*
+     * O QR pode ser gerado pelo frontend.
+     * Caso seu onCadastrar já envie um código QR,
+     * ele pode continuar sendo usado.
+     */
+    const codigoQrRecebido = texto(dados.codigoQr, 120);
+
+    const codigoQr = codigoQrValido(codigoQrRecebido)
+      ? codigoQrRecebido
+      : `QR-${crypto.randomUUID()}`;
+
+    try {
+      await db
+        .prepare(
+          `
+          INSERT INTO visitantes (
+            id,
+            nome,
+            email,
+            cpf,
+            telefone,
+            vinculo,
+            como_soube,
+            genero,
+            curso_interesse,
+            codigo_qr,
+            qr_code_svg,
+            criado_em,
+            atualizado_em
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `,
+        )
+        .bind(
+          id,
+          validacao.dados.nome,
+          validacao.dados.email,
+          validacao.dados.cpf,
+          validacao.dados.telefone,
+          validacao.dados.vinculo,
+          validacao.dados.comoSoube,
+          validacao.dados.genero,
+          validacao.dados.cursoInteresse,
+          codigoQr,
+          validacao.dados.qrCodeSvg,
+          agora,
+          agora,
+        )
+        .run();
+
+      const salvo = await db
+        .prepare(
+          `
+          SELECT
+            id,
+            nome,
+            email,
+            cpf,
+            telefone,
+            vinculo,
+            como_soube,
+            genero,
+            curso_interesse,
+            codigo_qr,
+            qr_code_svg,
+            criado_em,
+            atualizado_em
+          FROM visitantes
+          WHERE id = ?
+          `,
+        )
+        .bind(id)
+        .first<VisitanteLinha>();
+
+      if (!salvo) {
+        return erro(
+          "Visitante cadastrado, mas não foi possível recuperar os dados.",
+          500,
+        );
+      }
+
+      return json(
+        {
+          visitante: visitanteParaCliente(salvo),
+        },
+        201,
+      );
+    } catch (error) {
+      console.error("Erro em POST /visitantes:", error);
+
+      const tratamento = mensagemErroBanco(error);
+
+      return erro(
+        tratamento.mensagem,
+        tratamento.status,
+      );
+    }
+  }
+
+  /* =========================
+     IDENTIFICAR /visitantes/:id
+     ========================= */
+
+  const idVisitante =
+    rota.match(/^\/visitantes\/([^/]+)$/)?.[1] ?? null;
+
+  /* =========================
+     PATCH /visitantes/:id
+     ========================= */
+
   if (request.method === "PATCH" && idVisitante) {
-    if (!autorizado) return json({ erro: "AutenticaÃ§Ã£o necessÃ¡ria." }, 401);
-    const dados = await corpoJson(request);
-    if (!dados) return json({ erro: "JSON invÃ¡lido." }, 400);
-    const pares = CAMPOS_EDITAVEIS.filter((campo) => campo in dados);
-    if (!pares.length) return json({ erro: "Nenhum campo para atualizar." }, 400);
-    const colunas: Record<(typeof CAMPOS_EDITAVEIS)[number], string> = {
-      nome: "nome",
-      email: "email",
-      cpf: "cpf",
-      telefone: "telefone",
-      vinculo: "vinculo",
-      comoSoube: "como_soube",
-      genero: "genero",
-      cursoInteresse: "curso_interesse",
-    };
-    const valores = pares.map((campo) => texto(dados[campo], campo === "email" ? 255 : 150));
-    await db
-      .prepare(
-        `UPDATE visitantes SET ${pares.map((campo) => `${colunas[campo]} = ?`).join(", ")}, atualizado_em = ? WHERE id = ?`,
-      )
-      .bind(...valores, agora, decodeURIComponent(idVisitante))
-      .run();
-    const salvo = await db
-      .prepare("SELECT * FROM visitantes WHERE id = ?")
-      .bind(decodeURIComponent(idVisitante))
-      .first<VisitanteLinha>();
-    return salvo
-      ? json({ visitante: visitanteParaCliente(salvo) })
-      : json({ erro: "Visitante nÃ£o encontrado." }, 404);
-  }
+    if (!autorizado) {
+      return erro("Autenticação necessária.", 401);
+    }
 
-  // DELETE /visitantes/:id (restrita): remove visitante; o SQL remove presenÃ§as em cascata.
-  if (request.method === "DELETE" && idVisitante) {
-    if (!autorizado) return json({ erro: "AutenticaÃ§Ã£o necessÃ¡ria." }, 401);
-    const resultado = await db
-      .prepare("DELETE FROM visitantes WHERE id = ?")
-      .bind(decodeURIComponent(idVisitante))
-      .run();
-    return resultado.meta.changes
-      ? json({ removido: true })
-      : json({ erro: "Visitante nÃ£o encontrado." }, 404);
-  }
+    const idDecodificado = decodeURIComponent(idVisitante);
 
-  // POST /presencas (restrita): recebe cÃ³digo QR + setor; data e identificador sÃ£o gerados no servidor.
-  if (request.method === "POST" && rota === "/presencas") {
-    if (!autorizado) return json({ erro: "AutenticaÃ§Ã£o necessÃ¡ria." }, 401);
     const dados = await corpoJson(request);
-    const codigoQr = texto(dados?.codigoQr, 120);
-    const setor = texto(dados?.setor, 50);
-    const visitante = codigoQr
-      ? await db
-          .prepare("SELECT * FROM visitantes WHERE codigo_qr = ?")
-          .bind(codigoQr)
-          .first<VisitanteLinha>()
-      : null;
-    if (!visitante) return json({ status: "desconhecido", visitante: null });
-    const id = idNovo("pre");
-    const insercao = await db
-      .prepare(
-        "INSERT IGNORE INTO presencas (id, visitante_id, codigo_qr, setor, registrado_em) VALUES (?, ?, ?, ?, ?)",
-      )
-      .bind(id, visitante.id, codigoQr, setor, agora)
-      .run();
-    if (!insercao.meta.changes)
-      return json({ status: "repetido", visitante: visitanteParaCliente(visitante) });
-    const presenca = await db
-      .prepare("SELECT * FROM presencas WHERE id = ?")
-      .bind(id)
-      .first<PresencaLinha>();
-    return json(
-      {
-        status: "registrado",
-        visitante: visitanteParaCliente(visitante),
-        presenca: presenca && presencaParaCliente(presenca),
-      },
-      201,
+
+    if (!dados) {
+      return erro("JSON inválido.", 400);
+    }
+
+    const pares = CAMPOS_EDITAVEIS.filter(
+      (campo) => campo in dados,
     );
+
+    if (!pares.length) {
+      return erro(
+        "Nenhum campo válido para atualizar.",
+        400,
+      );
+    }
+
+    const valores: unknown[] = [];
+
+    for (const campo of pares) {
+      const valor = dados[campo];
+
+      if (campo === "cpf") {
+        const cpf = normalizarCpf(valor);
+
+        if (!cpfValido(cpf)) {
+          return erro("CPF inválido.", 400);
+        }
+
+        valores.push(cpf);
+        continue;
+      }
+
+      if (campo === "email") {
+        const email = normalizarEmail(valor);
+
+        if (!emailValido(email)) {
+          return erro("E-mail inválido.", 400);
+        }
+
+        valores.push(email);
+        continue;
+      }
+
+      if (campo === "telefone") {
+        const telefone = normalizarTelefone(valor);
+
+        if (!telefoneValido(telefone)) {
+          return erro("Telefone inválido.", 400);
+        }
+
+        valores.push(telefone);
+        continue;
+      }
+
+      const limite =
+        campo === "nome"
+          ? 100
+          : campo === "cursoInteresse"
+            ? 150
+            : 100;
+
+      valores.push(texto(valor, limite));
+    }
+
+    const sql = `
+      UPDATE visitantes
+      SET
+        ${pares
+          .map(
+            (campo) =>
+              `${COLUNAS_EDITAVEIS[campo]} = ?`,
+          )
+          .join(", ")},
+        atualizado_em = ?
+      WHERE id = ?
+    `;
+
+    try {
+      const resultado = await db
+        .prepare(sql)
+        .bind(...valores, agora, idDecodificado)
+        .run();
+
+      if (!resultado.meta.changes) {
+        return erro(
+          "Visitante não encontrado.",
+          404,
+        );
+      }
+
+      const salvo = await db
+        .prepare(
+          `
+          SELECT
+            id,
+            nome,
+            email,
+            cpf,
+            telefone,
+            vinculo,
+            como_soube,
+            genero,
+            curso_interesse,
+            codigo_qr,
+            qr_code_svg,
+            criado_em,
+            atualizado_em
+          FROM visitantes
+          WHERE id = ?
+          `,
+        )
+        .bind(idDecodificado)
+        .first<VisitanteLinha>();
+
+      if (!salvo) {
+        return erro(
+          "Não foi possível recuperar o visitante atualizado.",
+          500,
+        );
+      }
+
+      return json({
+        visitante: visitanteParaCliente(salvo),
+      });
+    } catch (error) {
+      console.error("Erro em PATCH /visitantes/:id:", error);
+
+      const tratamento = mensagemErroBanco(error);
+
+      return erro(
+        tratamento.mensagem,
+        tratamento.status,
+      );
+    }
   }
 
-  return json({ erro: "Rota da API nÃ£o encontrada." }, 404);
+  /* =========================
+     DELETE /visitantes/:id
+     ========================= */
+
+  if (request.method === "DELETE" && idVisitante) {
+    if (!autorizado) {
+      return erro("Autenticação necessária.", 401);
+    }
+
+    const idDecodificado = decodeURIComponent(idVisitante);
+
+    try {
+      const resultado = await db
+        .prepare(
+          "DELETE FROM visitantes WHERE id = ?",
+        )
+        .bind(idDecodificado)
+        .run();
+
+      if (!resultado.meta.changes) {
+        return erro(
+          "Visitante não encontrado.",
+          404,
+        );
+      }
+
+      return json({
+        removido: true,
+        id: idDecodificado,
+      });
+    } catch (error) {
+      console.error("Erro em DELETE /visitantes/:id:", error);
+
+      return erro(
+        "Não foi possível remover o visitante.",
+        500,
+      );
+    }
+  }
+
+  /* =========================
+     POST /presencas
+     ========================= */
+
+  if (
+    request.method === "POST" &&
+    rota === "/presencas"
+  ) {
+    if (!autorizado) {
+      return erro("Autenticação necessária.", 401);
+    }
+
+    const dados = await corpoJson(request);
+
+    if (!dados) {
+      return erro("JSON inválido.", 400);
+    }
+
+    const codigoQr = texto(dados.codigoQr, 120);
+    const setor = texto(dados.setor, 50);
+
+    if (!codigoQrValido(codigoQr)) {
+      return erro(
+        "Código QR inválido.",
+        400,
+      );
+    }
+
+    if (!setor) {
+      return erro(
+        "Setor não informado.",
+        400,
+      );
+    }
+
+    try {
+      const visitante = await db
+        .prepare(
+          `
+          SELECT
+            id,
+            nome,
+            email,
+            cpf,
+            telefone,
+            vinculo,
+            como_soube,
+            genero,
+            curso_interesse,
+            codigo_qr,
+            qr_code_svg,
+            criado_em,
+            atualizado_em
+          FROM visitantes
+          WHERE codigo_qr = ?
+          LIMIT 1
+          `,
+        )
+        .bind(codigoQr)
+        .first<VisitanteLinha>();
+
+      if (!visitante) {
+        return json({
+          status: "desconhecido",
+          visitante: null,
+        });
+      }
+
+      /*
+       * A restrição UNIQUE no banco deve impedir
+       * uma segunda presença do mesmo visitante
+       * no mesmo setor.
+       */
+      const id = idNovo("pre");
+
+      const insercao = await db
+        .prepare(
+          `
+          INSERT IGNORE INTO presencas (
+            id,
+            visitante_id,
+            codigo_qr,
+            setor,
+            registrado_em
+          )
+          VALUES (?, ?, ?, ?, ?)
+          `,
+        )
+        .bind(
+          id,
+          visitante.id,
+          codigoQr,
+          setor,
+          agora,
+        )
+        .run();
+
+      if (!insercao.meta.changes) {
+        return json({
+          status: "repetido",
+          visitante:
+            visitanteParaCliente(visitante),
+        });
+      }
+
+      const presenca = await db
+        .prepare(
+          `
+          SELECT
+            id,
+            visitante_id,
+            codigo_qr,
+            setor,
+            registrado_em
+          FROM presencas
+          WHERE id = ?
+          LIMIT 1
+          `,
+        )
+        .bind(id)
+        .first<PresencaLinha>();
+
+      return json(
+        {
+          status: "registrado",
+          visitante:
+            visitanteParaCliente(visitante),
+          presenca:
+            presenca &&
+            presencaParaCliente(presenca),
+        },
+        201,
+      );
+    } catch (error) {
+      console.error("Erro em POST /presencas:", error);
+
+      return erro(
+        "Não foi possível registrar a presença.",
+        500,
+      );
+    }
+  }
+
+  /* =========================
+     ROTA NÃO ENCONTRADA
+  ========================= */
+
+  return erro(
+    "Rota da API não encontrada.",
+    404,
+  );
 }

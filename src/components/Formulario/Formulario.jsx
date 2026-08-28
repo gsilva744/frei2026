@@ -13,6 +13,7 @@ const camposVazios = {
   comoSoube: "",
   genero: "",
   cursoInteresse: "",
+  participaComoColaborador: false,
 };
 
 /* Formata o CPF enquanto a pessoa digita: 000.000.000-00 */
@@ -41,12 +42,34 @@ function Formulario({ onCadastrar, mostrarQrCode = true, titulo, descricao }) {
   const [enviando, setEnviando] = useState(false);
   const [visitanteCadastrado, setVisitanteCadastrado] = useState(null);
 
-  function alterarCampo(evento) {
-    const { name, value } = evento.target;
-    const tratado =
-      name === "cpf" ? formatarCpf(value) : name === "telefone" ? formatarTelefone(value) : value;
-    setCampos((anterior) => ({ ...anterior, [name]: tratado }));
+function alterarCampo(evento) {
+  const { name, value } = evento.target;
+
+  if (name === "vinculo") {
+    setCampos((anterior) => ({
+      ...anterior,
+      vinculo: value,
+      participaComoColaborador:
+        value === "Aluno atual"
+          ? anterior.participaComoColaborador
+          : false,
+    }));
+
+    return;
   }
+
+  const tratado =
+    name === "cpf"
+      ? formatarCpf(value)
+      : name === "telefone"
+        ? formatarTelefone(value)
+        : value;
+
+  setCampos((anterior) => ({
+    ...anterior,
+    [name]: tratado,
+  }));
+}
 
   
   function baixarQrCode() {
@@ -244,6 +267,8 @@ function Formulario({ onCadastrar, mostrarQrCode = true, titulo, descricao }) {
           </select>
         </div>
 
+        
+
         <div className="formulario-campo">
           <label htmlFor="cursoInteresse">Curso de interesse</label>
           <select
@@ -261,6 +286,38 @@ function Formulario({ onCadastrar, mostrarQrCode = true, titulo, descricao }) {
             ))}
           </select>
         </div>
+
+        {campos.vinculo === "Aluno atual" && (
+          <div className="formulario-campo">
+            <label htmlFor="participaComoColaborador">
+              Vai participar como colaborador da feira?
+            </label>
+
+            <select
+              id="participaComoColaborador"
+              name="participaComoColaborador"
+              value={
+                campos.participaComoColaborador === true
+                  ? "true"
+                  : campos.participaComoColaborador === false
+                    ? "false"
+                    : ""
+              }
+              onChange={(evento) =>
+                setCampos((anterior) => ({
+                  ...anterior,
+                  participaComoColaborador:
+                    evento.target.value === "true",
+                }))
+              }
+              required
+            >
+              <option value="">Selecione</option>
+              <option value="true">Sim</option>
+              <option value="false">Não</option>
+            </select>
+          </div>
+        )}
 
         <div className="formulario-campo formulario-campo-largo">
           <label htmlFor="comoSoube">Como ficou sabendo da feira?</label>

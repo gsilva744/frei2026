@@ -54,10 +54,12 @@ function Kpi({ rotulo, valor, detalhe, destaque }) {
 }
 
 function Dashboard() {
-  const { visitantes, presencas } = useVisitantes();
+  const { visitantes = [], presencas = [] } = useVisitantes();
   const [filtroVinculo, setFiltroVinculo] = useState("Todos");
   const [filtroGenero, setFiltroGenero] = useState("Todos");
   const [porGenero, setPorGenero] = useState(false);
+  const [filtroColaborador, setFiltroColaborador] =
+  useState("Todos");
 
   const visitantesPorId = useMemo(() => {
     const mapa = new Map();
@@ -66,15 +68,41 @@ function Dashboard() {
   }, [visitantes]);
 
   /* Aplica os filtros de vínculo e gênero a inscritos e presenças */
-  const inscritosFiltrados = useMemo(
-    () =>
-      visitantes.filter(
-        (visitante) =>
-          (filtroVinculo === "Todos" || visitante.vinculo === filtroVinculo) &&
-          (filtroGenero === "Todos" || visitante.genero === filtroGenero),
-      ),
-    [visitantes, filtroVinculo, filtroGenero],
-  );
+const inscritosFiltrados = useMemo(
+  () =>
+    visitantes.filter((visitante) => {
+      const correspondeVinculo =
+        filtroVinculo === "Todos" ||
+        visitante.vinculo === filtroVinculo;
+
+      const correspondeGenero =
+        filtroGenero === "Todos" ||
+        visitante.genero === filtroGenero;
+
+      const correspondeColaborador =
+        filtroColaborador === "Todos" ||
+        (filtroColaborador === "Sim" &&
+          visitante.vinculo === "Aluno atual" &&
+          visitante.participaComoColaborador === true) ||
+        (filtroColaborador === "Não" &&
+          !(
+            visitante.vinculo === "Aluno atual" &&
+            visitante.participaComoColaborador === true
+          ));
+
+      return (
+        correspondeVinculo &&
+        correspondeGenero &&
+        correspondeColaborador
+      );
+    }),
+  [
+    visitantes,
+    filtroVinculo,
+    filtroGenero,
+    filtroColaborador,
+  ],
+);
 
   const presencasFiltradas = useMemo(
     () =>
@@ -127,6 +155,15 @@ function Dashboard() {
   const alunosAtuais = inscritosFiltrados.filter((v) => v.vinculo === "Aluno atual").length;
   const exAlunos = inscritosFiltrados.filter((v) => v.vinculo === "Ex-aluno").length;
 
+  const colaboradores = inscritosFiltrados.filter(
+  (v) =>
+    v.vinculo === "Aluno atual" &&
+    v.participaComoColaborador === true
+).length;
+
+  const alunosNaoColaboradores =
+    alunosAtuais - colaboradores;
+
   function ranking(campo, limite = 6) {
     const mapa = {};
     inscritosFiltrados.forEach((visitante) => {
@@ -178,6 +215,24 @@ function Dashboard() {
           </select>
         </div>
 
+        <div className="dashboard-filtro">
+          <label htmlFor="filtro-colaborador">
+            Participação como colaborador
+          </label>
+
+          <select
+            id="filtro-colaborador"
+            value={filtroColaborador}
+            onChange={(evento) =>
+              setFiltroColaborador(evento.target.value)
+            }
+          >
+            <option value="Todos">Todos</option>
+            <option value="Sim">Colaboradores</option>
+            <option value="Não">Não colaboradores</option>
+          </select>
+        </div>
+
         <label className="dashboard-alternador">
           <input
             type="checkbox"
@@ -209,6 +264,16 @@ function Dashboard() {
           rotulo="Setores por visitante"
           valor={visitantesPresentes ? (totalPresencas / visitantesPresentes).toFixed(1) : "0,0"}
           detalhe={setorLider?.total ? `Líder: ${setorLider.nome}` : "Sem leituras ainda"}
+          destaque
+        />
+        <Kpi
+          rotulo="Colaboradores"
+          valor={colaboradores}
+          detalhe={
+            alunosAtuais
+              ? `${porcentagem(colaboradores, alunosAtuais)}% dos alunos atuais`
+              : "Nenhum aluno atual"
+          }
           destaque
         />
       </div>
@@ -329,11 +394,24 @@ function Dashboard() {
             <span>
               <strong>{alunosAtuais}</strong> alunos atuais
             </span>
+
+            <span>
+              <strong>{colaboradores}</strong> colaboradores
+            </span>
+
+            <span>
+              <strong>{alunosNaoColaboradores}</strong> alunos não colaboradores
+            </span>
+
             <span>
               <strong>{exAlunos}</strong> ex-alunos
             </span>
+
             <span>
-              <strong>{totalInscritos - alunosAtuais - exAlunos}</strong> público externo
+              <strong>
+                {totalInscritos - alunosAtuais - exAlunos}
+              </strong>{" "}
+              público externo
             </span>
           </div>
         </div>
