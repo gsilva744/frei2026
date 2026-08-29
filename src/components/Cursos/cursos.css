@@ -163,11 +163,12 @@
   }
 
   .cursos-categoria:first-child {
-    margin-right: 30px;
+    width: 85%;
+    margin-bottom: 0px;
   }
 
   .cursos-categorias {
-    gap: 0px;
+    gap: 20px;
   }
 
   .cursos-categoria {
@@ -175,10 +176,6 @@
     padding: 14px;
     width: 40%;
     
-  }
-  .cursos-categoria:last-child {
-    width: 90%;
-    margin-top: 30px;
   }
 
   .cursos-item {

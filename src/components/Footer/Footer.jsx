@@ -10,10 +10,8 @@ function Footer() {
           <div>
             <h4>Contatos</h4>
             <p>(11) 3798-5037 - secretaria</p>
-            <p>(11) 96398-6252 - secretaria - whatsapp
-
-</p>
-            <p> secretaria@acaonsfatima.org.br</p>
+            <p>(11) 96398-6252 - secretaria - whatsapp</p>
+            <p>secretaria@acaonsfatima.org.br</p>
           </div>
           <div>
             <h4>Endereço</h4>

@@ -85,11 +85,12 @@
   .header-menu-aberto {
     display: flex;
     flex-direction: column;
+    align-items: center;
     position: absolute;
     top: 100%;
     left: 0;
     right: 0;
-    background-color: var(--azul-escuro);
+    background-color: #122447;
     padding: 16px 20px;
     gap: 12px;
   }
@@ -99,6 +100,7 @@
     color: var(--amarelo);
     border-color: var(--amarelo);
     text-align: center;
+    
   }
 
   .header-acao {
@@ -107,9 +109,26 @@
 }
 
 @media (max-width: 420px) {
-  .header-logo img {
-    width: 36px;
-    height: 36px;
+  .logo1 {
+    width: 60px;
+    margin: auto;
+    display: block;
+  }
+
+  .logo2 {
+    width: 60px;
+    margin: auto;
+    display: block;
+  }
+
+  .header-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .header-conteudo {
+    width: 80%;
   }
 
   .header-logo-texto,
