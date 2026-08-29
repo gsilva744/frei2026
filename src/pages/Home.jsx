@@ -10,7 +10,6 @@ import Formulario from "../components/Formulario/Formulario";
 import Contador from "../components/Contador/Contador";
 import Depoimentos from "../components/Depoimentos/Depoimentos";
 import LivroDourado from "../components/LivroDourado/LivroDourado";
-import Parceiros from "../components/Parceiros/Parceiros";
 
 import Footer from "../components/Footer/Footer";
 import { useVisitantes } from "../utils/VisitantesContext";

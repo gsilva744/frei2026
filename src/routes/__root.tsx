@@ -80,11 +80,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "6ª Feira de Profissões 2026 | Instituto Social N. S. de Fátima" },
+      { title: "6ª Feira das Profissões 2026 | Instituto Social N. S. de Fátima" },
       {
         name: "description",
         content:
-          "Hotsite da 6ª Feira de Profissões 2026 do Instituto Social Nossa Senhora de Fátima.",
+          "6ª Feira das Profissões 2026 do Instituto Social Nossa Senhora de Fátima.",
       },
       { property: "og:title", content: "6ª Feira de Profissões 2026" },
       {
@@ -111,7 +111,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="pt-br">
       <head>
         <HeadContent />
       </head>
