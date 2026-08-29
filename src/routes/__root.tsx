@@ -9,6 +9,8 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
+import favicon from '../assets/favicon.png'
+
 import appCss from "../styles.css?url";
 import "../css/global.css";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -100,7 +102,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "icon", href: favicon, type: "image/png" },
     ],
   }),
   shellComponent: RootShell,
