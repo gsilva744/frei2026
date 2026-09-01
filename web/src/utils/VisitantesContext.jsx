@@ -1,15 +1,20 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { gerarCodigoUnico } from "./gerarCodigo";
 import {
   administradorAtual,
-  carregarDadosDaFeira,
+  carregarPresencas,
   carregarSetores,
+  carregarTodosVisitantes,
+  checkinVisitanteNoBanco,
   criarVisitanteNoBanco,
   atualizarVisitanteNoBanco,
   ErroDeConexao,
   registrarPresencaNoBanco,
   removerVisitanteNoBanco,
 } from "../services/apiFeira";
+
+// "leitor" não tem permissão na API para listar visitantes (não precisa: só lê QR Code
+// e registra presença) — pedir mesmo assim só geraria um 403 previsível.
+const PAPEIS_COM_ACESSO_A_VISITANTES = ["admin", "credenciamento"];
 
 /*
  * Estado compartilhado da feira.
@@ -41,12 +46,20 @@ export function VisitantesProvider({ children }) {
   const [administrador, setAdministrador] = useState(null);
 
   const carregarDoBanco = useCallback(async () => {
-    const dados = await carregarDadosDaFeira();
-    setVisitantes(dados.visitantes || []);
-    setPresencas(dados.presencas || []);
-    setSetores(dados.setores || []);
+    const sessao = administradorAtual();
+    const podeVerVisitantes = PAPEIS_COM_ACESSO_A_VISITANTES.includes(sessao?.papel);
+
+    const [novosVisitantes, novasPresencas, novosSetores] = await Promise.all([
+      podeVerVisitantes ? carregarTodosVisitantes() : Promise.resolve([]),
+      carregarPresencas(),
+      carregarSetores(),
+    ]);
+
+    setVisitantes(novosVisitantes);
+    setPresencas(novasPresencas);
+    setSetores(novosSetores);
     setBancoConectado(true);
-    return dados;
+    return { visitantes: novosVisitantes, presencas: novasPresencas, setores: novosSetores };
   }, []);
 
   useEffect(() => {
@@ -115,11 +128,14 @@ export function VisitantesProvider({ children }) {
       if (!(erro instanceof ErroDeConexao)) throw erro;
 
       // Erro de conexão de verdade: mantém a inscrição só no dispositivo.
-      // A mensagem permite à equipe saber que precisa sincronizá-la depois.
+      // A mensagem permite à equipe saber que precisa sincronizá-la depois. O código do
+      // QR Code só é vinculado no check-in (não é gerado por este app), então fica nulo
+      // aqui também, igual ao que a API faria.
       const novoVisitante = {
         id: `vis-${crypto.randomUUID()}`,
         ...dados,
-        codigoQr: gerarCodigoUnico(),
+        codigoQr: null,
+        dataChegada: null,
         criadoEm: new Date().toISOString(),
       };
       setVisitantes((lista) => [novoVisitante, ...lista]);
@@ -138,6 +154,12 @@ export function VisitantesProvider({ children }) {
     await removerVisitanteNoBanco(id);
     setVisitantes((lista) => lista.filter((visitante) => visitante.id !== id));
     setPresencas((lista) => lista.filter((presenca) => presenca.visitanteId !== id));
+  }
+
+  async function fazerCheckin(id, codigoQr) {
+    const salvo = await checkinVisitanteNoBanco(id, codigoQr);
+    setVisitantes((lista) => lista.map((visitante) => (visitante.id === id ? salvo : visitante)));
+    return salvo;
   }
 
   function buscarPorCodigo(codigo) {
@@ -163,6 +185,7 @@ export function VisitantesProvider({ children }) {
         adicionarVisitante,
         atualizarVisitante,
         removerVisitante,
+        fazerCheckin,
         buscarPorCodigo,
         registrarPresenca,
         carregarDoBanco,

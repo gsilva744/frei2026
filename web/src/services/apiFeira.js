@@ -194,6 +194,16 @@ export async function atualizarVisitanteNoBanco(id, dados) {
   return corpo.dados;
 }
 
+/* Vincula o código do QR Code (não gerado por este app) ao visitante e marca a
+ * chegada — usado no check-in feito pela equipe de credenciamento. */
+export async function checkinVisitanteNoBanco(id, codigoQr) {
+  const corpo = await requisitar(`/visitantes/${encodeURIComponent(id)}/checkin`, {
+    method: "PATCH",
+    body: JSON.stringify({ codigoQr }),
+  });
+  return corpo.dados;
+}
+
 export async function removerVisitanteNoBanco(id) {
   await requisitar(`/visitantes/${encodeURIComponent(id)}`, { method: "DELETE" });
 }

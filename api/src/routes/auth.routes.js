@@ -13,7 +13,7 @@ router.post("/refresh", loginLimiter, validate(refreshSchema), authController.re
 router.post(
   "/logout",
   authenticate,
-  authorize("admin", "credenciamento"),
+  authorize("admin", "credenciamento", "leitor"),
   authenticatedLimiter,
   validate(refreshSchema),
   authController.logout,

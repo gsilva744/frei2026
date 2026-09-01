@@ -132,6 +132,48 @@ a.botao-amarelo {
   margin-bottom: 16px;
 }
 
+.admin-painel-topo-acoes {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-hub-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.admin-hub-card {
+  display: block;
+  background-color: var(--branco);
+  border-radius: var(--raio);
+  border-top: 4px solid var(--amarelo);
+  padding: 24px 22px;
+  box-shadow: var(--sombra);
+  animation: aparecer 0.4s ease both;
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+
+.admin-hub-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 26px rgba(15, 37, 80, 0.18);
+}
+
+.admin-hub-card h3 {
+  color: var(--azul);
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.admin-hub-card p {
+  font-size: 13px;
+  color: var(--texto-claro);
+  line-height: 1.6;
+}
+
 .admin-painel-topo h2 {
   color: var(--azul);
   font-size: 18px;
@@ -211,6 +253,11 @@ a.botao-amarelo {
 .admin-acao-qr:hover {
   background-color: var(--amarelo);
   color: var(--azul-escuro);
+}
+
+.admin-acao-checkin:hover {
+  background-color: #17633b;
+  color: var(--branco);
 }
 
 .admin-acao-excluir:hover {

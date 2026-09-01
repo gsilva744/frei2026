@@ -18,6 +18,12 @@
   padding: 20px;
   box-shadow: var(--sombra);
   position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-caixa-larga {
+  max-width: 760px;
 }
 
 .modal-titulo {

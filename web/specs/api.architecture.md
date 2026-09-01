@@ -81,7 +81,7 @@ api/
 │   │   └── setores.repository.js
 │   ├── middlewares/
 │   │   ├── authenticate.js       Verifica e decodifica o JWT (Authorization: Bearer)
-│   │   ├── authorize.js          Checa papel (admin | credenciamento) exigido pela rota
+│   │   ├── authorize.js          Checa papel (admin | credenciamento | leitor) exigido pela rota
 │   │   ├── rateLimiters.js       Instâncias de rate limit por tipo de rota
 │   │   ├── validate.js           Middleware genérico: valida body/params/query com um schema zod
 │   │   ├── errorHandler.js       Handler central de erros (formata resposta JSON de erro)
@@ -218,7 +218,7 @@ erDiagram
         varchar120 nome
         varchar190 email UK
         varchar100 senha_hash
-        enum papel "admin | credenciamento"
+        enum papel "admin | credenciamento | leitor"
         boolean ativo
         datetime criado_em
         datetime atualizado_em
@@ -270,11 +270,14 @@ erDiagram
 ### 6.1 `administradores`
 
 Substitui a credencial única `RESTRICTED_AREA_USERNAME`/`RESTRICTED_AREA_PASSWORD` do
-projeto `web`. Papéis:
+projeto `web`. Três papéis, cada um restrito à sua própria fatia de funcionalidade —
+só `admin` acumula acesso total:
 
-- **`admin`** — acessa dashboard analítico e tudo que `credenciamento` acessa.
-- **`credenciamento`** — cadastro no local, leitor de QR, impressão de crachás; sem
-  acesso às rotas de dashboard agregado.
+- **`admin`** — acesso total: dashboard, tudo de `credenciamento` e tudo de `leitor`.
+- **`credenciamento`** — lista, cadastra, edita, exclui (não — exclusão é só `admin`) e
+  faz check-in de visitantes. Sem acesso a `/presencas` (POST) nem a `/dashboard/*`.
+- **`leitor`** — só registra presença via QR Code (`POST /presencas`) e lê a lista de
+  presenças para mostrar contadores. Sem acesso à lista de visitantes nem ao dashboard.
 
 ```sql
 CREATE TABLE IF NOT EXISTS administradores (
@@ -282,7 +285,7 @@ CREATE TABLE IF NOT EXISTS administradores (
   nome VARCHAR(120) NOT NULL,
   email VARCHAR(190) NOT NULL UNIQUE,
   senha_hash VARCHAR(100) NOT NULL,
-  papel ENUM('admin', 'credenciamento') NOT NULL DEFAULT 'credenciamento',
+  papel ENUM('admin', 'credenciamento', 'leitor') NOT NULL DEFAULT 'credenciamento',
   ativo BOOLEAN NOT NULL DEFAULT TRUE,
   criado_em DATETIME NOT NULL,
   atualizado_em DATETIME NOT NULL
@@ -393,24 +396,33 @@ Prefixo base: `/api`. Coluna **Auth** indica o papel mínimo exigido
 | --- | --- | --- | --- | --- |
 | POST | `/auth/login` | — | `loginLimiter` | Login de administrador/equipe; devolve access + refresh token |
 | POST | `/auth/refresh` | — (refresh token no corpo) | `loginLimiter` | Rotaciona o par de tokens |
-| POST | `/auth/logout` | admin, credenciamento | `authenticatedLimiter` | Revoga o refresh token atual |
+| POST | `/auth/logout` | admin, credenciamento, leitor | `authenticatedLimiter` | Revoga o refresh token atual |
 | GET | `/setores` | — | `publicReadLimiter` | Lista setores/atrações (preenche formulário e filtros) |
-| POST | `/visitantes` | — | `publicWriteLimiter` | Inscrição pública (hotsite) ou credenciamento no local |
+| POST | `/visitantes` | — | `publicWriteLimiter` | Inscrição pública (hotsite) ou credenciamento no local — a única escrita que o visitante faz sozinho, por isso fica fora do JWT |
 | GET | `/visitantes` | admin, credenciamento | `authenticatedLimiter` | Lista visitantes (paginação + busca por nome/e-mail/CPF/telefone/curso/código QR) |
 | GET | `/visitantes/:id` | admin, credenciamento | `authenticatedLimiter` | Detalhe de um visitante |
 | PATCH | `/visitantes/:id` | admin, credenciamento | `authenticatedLimiter` | Edita campos cadastrais |
 | DELETE | `/visitantes/:id` | admin | `authenticatedLimiter` | Remove visitante (cascata remove presenças) |
-| POST | `/presencas` | admin, credenciamento | `authenticatedLimiter` | Registra presença a partir do código QR lido + setor |
-| GET | `/presencas` | admin, credenciamento | `authenticatedLimiter` | Lista presenças (usada pelo dashboard e pela aba de credenciamento) |
+| PATCH | `/visitantes/:id/checkin` | admin, credenciamento | `authenticatedLimiter` | Vincula o código do QR Code (originado fora do sistema) ao visitante e grava `data_chegada` |
+| POST | `/presencas` | admin, leitor | `authenticatedLimiter` | Registra presença a partir do código QR lido + setor |
+| GET | `/presencas` | admin, credenciamento, leitor | `authenticatedLimiter` | Lista presenças (alimenta os contadores do hub, credenciamento e leitor) |
 | GET | `/dashboard/resumo` | admin | `authenticatedLimiter` | KPIs agregados (inscritos, presenças, comparecimento, colaboradores) |
 | GET | `/dashboard/setores` | admin | `authenticatedLimiter` | Presença por setor, com breakdown por gênero/vínculo |
 | GET | `/dashboard/rankings` | admin | `authenticatedLimiter` | Cursos mais procurados e canais de divulgação mais eficazes |
 
-`GET /visitantes` e `GET /presencas` aceitam `credenciamento` porque o painel de
-credenciamento também lista/busca visitantes e mostra contagem de presenças — mesmo
-comportamento do `PainelCredenciamento` em `web/src/pages/Credenciamento.jsx`. As rotas
-de `/dashboard/*` ficam restritas a `admin` porque hoje só `Admin.jsx` renderiza
-`Dashboard.jsx`.
+Cada papel só recebe autorização nas rotas que sua própria página usa — reflexo direto
+de `web/src/pages/admin/*`:
+
+- `GET /visitantes` fica restrito a `admin`/`credenciamento` porque só a página
+  `admin/Credenciamento.jsx` lista/busca/edita visitantes; `leitor` nunca precisa da
+  lista completa (só lê um QR Code por vez) e por isso não tem essa permissão.
+- `POST /presencas` fica restrito a `admin`/`leitor` porque é a função central da
+  página `admin/Leitor.jsx`; `credenciamento` não acessa mais essa página (cada papel
+  não-admin vê só o cartão da própria função no hub `/admin`), então perdeu essa rota.
+- `GET /presencas` aceita os três papéis porque cada página (hub, credenciamento,
+  leitor) mostra um contador de presenças registradas.
+- `/dashboard/*` fica restrito a `admin` porque só `admin/Dashboard.jsx` existe para
+  esse papel — nem `credenciamento` nem `leitor` têm o cartão Dashboard no hub.
 
 ## 8. Formato de resposta e erros
 

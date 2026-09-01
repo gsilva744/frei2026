@@ -76,3 +76,12 @@ export const listarVisitantesQuerySchema = z.object({
 export const idParamSchema = z.object({
   id: z.string().trim().min(1, "Identificador inválido."),
 });
+
+/* O código vem de fora do sistema (impressão física, outro sistema) — não é o app que
+ * gera nem valida formato além de não estar vazio e caber na coluna. */
+export const checkinSchema = z.object({
+  codigoQr: texto("Informe o código do QR Code.")
+    .trim()
+    .min(1, "Informe o código do QR Code.")
+    .max(120),
+});

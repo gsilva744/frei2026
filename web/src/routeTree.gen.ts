@@ -10,53 +10,89 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AdminRouteImport } from './routes/admin'
-import { Route as CredenciamentoRouteImport } from './routes/credenciamento'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminCredenciamentoRouteImport } from './routes/admin/credenciamento'
+import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as AdminLeitorRouteImport } from './routes/admin/leitor'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CredenciamentoRoute = CredenciamentoRouteImport.update({
-  id: '/credenciamento',
-  path: '/credenciamento',
+const AdminCredenciamentoRoute = AdminCredenciamentoRouteImport.update({
+  id: '/admin/credenciamento',
+  path: '/admin/credenciamento',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminDashboardRoute = AdminDashboardRouteImport.update({
+  id: '/admin/dashboard',
+  path: '/admin/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminLeitorRoute = AdminLeitorRouteImport.update({
+  id: '/admin/leitor',
+  path: '/admin/leitor',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
-  '/credenciamento': typeof CredenciamentoRoute
+  '/admin/credenciamento': typeof AdminCredenciamentoRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/leitor': typeof AdminLeitorRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
-  '/credenciamento': typeof CredenciamentoRoute
+  '/admin/credenciamento': typeof AdminCredenciamentoRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/leitor': typeof AdminLeitorRoute
+  '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
-  '/credenciamento': typeof CredenciamentoRoute
+  '/admin/credenciamento': typeof AdminCredenciamentoRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/leitor': typeof AdminLeitorRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/credenciamento'
+  fullPaths:
+    | '/'
+    | '/admin/credenciamento'
+    | '/admin/dashboard'
+    | '/admin/leitor'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/credenciamento'
-  id: '__root__' | '/' | '/admin' | '/credenciamento'
+  to:
+    | '/'
+    | '/admin/credenciamento'
+    | '/admin/dashboard'
+    | '/admin/leitor'
+    | '/admin'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin/credenciamento'
+    | '/admin/dashboard'
+    | '/admin/leitor'
+    | '/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
-  CredenciamentoRoute: typeof CredenciamentoRoute
+  AdminCredenciamentoRoute: typeof AdminCredenciamentoRoute
+  AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminLeitorRoute: typeof AdminLeitorRoute
+  AdminIndexRoute: typeof AdminIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -68,18 +104,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin': {
-      id: '/admin'
+    '/admin/': {
+      id: '/admin/'
       path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/credenciamento': {
-      id: '/credenciamento'
-      path: '/credenciamento'
-      fullPath: '/credenciamento'
-      preLoaderRoute: typeof CredenciamentoRouteImport
+    '/admin/credenciamento': {
+      id: '/admin/credenciamento'
+      path: '/admin/credenciamento'
+      fullPath: '/admin/credenciamento'
+      preLoaderRoute: typeof AdminCredenciamentoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/dashboard': {
+      id: '/admin/dashboard'
+      path: '/admin/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/leitor': {
+      id: '/admin/leitor'
+      path: '/admin/leitor'
+      fullPath: '/admin/leitor'
+      preLoaderRoute: typeof AdminLeitorRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -87,8 +137,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
-  CredenciamentoRoute: CredenciamentoRoute,
+  AdminCredenciamentoRoute: AdminCredenciamentoRoute,
+  AdminDashboardRoute: AdminDashboardRoute,
+  AdminLeitorRoute: AdminLeitorRoute,
+  AdminIndexRoute: AdminIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

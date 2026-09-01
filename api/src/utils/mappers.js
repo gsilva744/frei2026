@@ -12,6 +12,7 @@ export function visitanteParaCliente(linha) {
     genero: linha.genero,
     cursoInteresse: linha.curso_interesse,
     participaComoColaborador: Boolean(linha.participa_como_colaborador),
+    dataChegada: linha.data_chegada,
     codigoQr: linha.codigo_qr,
     qrCodeSvg: linha.qr_code_svg,
     criadoEm: linha.criado_em,

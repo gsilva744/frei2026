@@ -8,9 +8,18 @@ import { registrarPresencaSchema } from "../schemas/presenca.schema.js";
 
 const router = Router();
 
-router.use(authenticate, authorize("admin", "credenciamento"), authenticatedLimiter);
+router.use(authenticate, authenticatedLimiter);
 
-router.post("/", validate(registrarPresencaSchema), presencasController.registrar);
-router.get("/", presencasController.listar);
+// Registrar presença é a função do leitor de QR — não precisa acessar a lista de
+// visitantes (`credenciamento` não tem essa rota liberada aqui).
+router.post(
+  "/",
+  authorize("admin", "leitor"),
+  validate(registrarPresencaSchema),
+  presencasController.registrar,
+);
+
+// Ler a lista de presenças alimenta os contadores do hub/credenciamento/leitor.
+router.get("/", authorize("admin", "credenciamento", "leitor"), presencasController.listar);
 
 export default router;

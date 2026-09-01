@@ -25,3 +25,8 @@ export const remover = asyncHandler(async (req, res) => {
   await visitantesService.remover(req.params.id);
   res.status(204).send();
 });
+
+export const checkin = asyncHandler(async (req, res) => {
+  const visitante = await visitantesService.checkin(req.params.id, req.body.codigoQr);
+  res.status(200).json({ dados: visitante });
+});

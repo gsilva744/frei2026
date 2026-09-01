@@ -8,10 +8,12 @@
 O projeto é uma aplicação full-stack única que cobre três públicos diferentes:
 
 1. **Público geral** — visita o hotsite (`/`), conhece a feira e se inscreve.
-2. **Administração** — acessa `/admin` (autenticado) para ver o dashboard analítico
-   de inscritos e presenças.
-3. **Equipe de credenciamento** — acessa `/credenciamento` (autenticado) para cadastrar
-   visitantes no local, ler QR Codes de presença e imprimir crachás no dia do evento.
+2. **Administração** (papel `admin`) — loga em `/admin` e acessa o hub com os três
+   cartões: `/admin/dashboard`, `/admin/credenciamento` e `/admin/leitor`.
+3. **Equipe de credenciamento** (papel `credenciamento`) — loga em `/admin`, mas só vê o
+   cartão de `/admin/credenciamento` (lista de visitantes, cadastro e check-in).
+4. **Equipe do leitor** (papel `leitor`) — loga em `/admin`, mas só vê o cartão de
+   `/admin/leitor` (leitura de QR Code para registrar presença).
 
 Toda a interface (site + telas restritas) é renderizada pelo mesmo app React com
 **SSR** via TanStack Start. Este projeto **não acessa banco de dados nem implementa
@@ -47,8 +49,8 @@ src/
 ├── data/           Conteúdo estático (cursos, atrações, depoimentos, gêneros/vínculos, parceiros)
 ├── hooks/          Hooks utilitários (use-mobile)
 ├── lib/            Utilitários de baixo nível: captura de erro, página de erro, decodificador de QR Code, utils gerais
-├── pages/          Componentes de página (Home, Admin, Credenciamento)
-├── routes/         Definições de rota do TanStack Router (file-based)
+├── pages/          Componentes de página (Home, e pages/admin/: Hub, Dashboard, Credenciamento, Leitor)
+├── routes/         Definições de rota do TanStack Router (file-based; routes/admin/ tem as 4 sub-rotas)
 ├── services/       Camada de comunicação com a API externa: login/JWT, visitantes, presenças, setores, dashboard (`apiFeira.js`)
 ├── utils/          Contexto de visitantes (VisitantesContext), geração de código local, impressão/compartilhamento
 ├── router.tsx      Fábrica do router (React Router + QueryClient)
@@ -61,13 +63,17 @@ src/
 | Rota | Página | Proteção | Descrição |
 | --- | --- | --- | --- |
 | `/` | `Home.jsx` | Pública | Hotsite: hero, sobre, livro dourado, atrações, cursos, depoimentos, formulário de inscrição, localização, footer |
-| `/admin` | `Admin.jsx` | JWT, papel `admin` | Dashboard analítico de inscritos/presenças |
-| `/credenciamento` | `Credenciamento.jsx` | JWT, papéis `admin` ou `credenciamento` | Painel operacional do dia do evento (cadastro local, leitor de QR, impressão) |
+| `/admin` | `admin/Hub.jsx` | JWT, papéis `admin`, `credenciamento` ou `leitor` | Hub pós-login: cartões para as páginas abaixo, filtrados pelo papel do usuário |
+| `/admin/dashboard` | `admin/Dashboard.jsx` | JWT, papel `admin` | Dashboard analítico de inscritos/presenças |
+| `/admin/credenciamento` | `admin/Credenciamento.jsx` | JWT, papéis `admin` ou `credenciamento` | Lista todos os visitantes; botão "+ Novo" abre modal de cadastro; editar/excluir/QR Code/check-in por linha |
+| `/admin/leitor` | `admin/Leitor.jsx` | JWT, papéis `admin` ou `leitor` | Leitor de QR Code por turma/setor, para registrar presença |
 
-A tela de login (`AreaRestrita`/`Acesso.jsx`) é a mesma para `/admin` e `/credenciamento`,
-mudando apenas título, descrição e os papéis aceitos (`papeisPermitidos`). A validação de
-e-mail/senha acontece na API (ver seção 6); se o administrador logado não tiver o papel
-exigido pela rota, a tela mostra uma mensagem de acesso negado em vez do conteúdo.
+Cada uma dessas quatro rotas é independente (não há layout/Outlet compartilhado) e usa
+o mesmo componente `AreaRestrita`/`Acesso.jsx`, mudando apenas título, descrição e os
+papéis aceitos (`papeisPermitidos`). A validação de e-mail/senha acontece na API (ver
+seção 6); se o administrador logado não tiver o papel exigido pela rota, a tela mostra
+uma mensagem de acesso negado em vez do conteúdo — e o hub em `/admin` já filtra os
+cartões conforme o papel, então a equipe de credenciamento nunca vê o cartão Dashboard.
 
 ## 5. Fluxo de dados no cliente
 
@@ -119,11 +125,12 @@ só o lado do cliente.
   `VisitantesContext` também limpa o cache local de visitantes/presenças
   (`localStorage`) nesse momento, para não manter dados de visitantes acessíveis no
   dispositivo além do necessário.
-- **Papéis**: `admin` (acesso total, incluindo dashboard e exclusão de visitantes) e
-  `credenciamento` (cadastro, listagem/edição de visitantes, leitor de QR — sem
-  dashboard nem exclusão). `AreaRestrita` recebe `papeisPermitidos` por página e nega
+- **Papéis**: `admin` (acesso total: dashboard, credenciamento e leitor), `credenciamento`
+  (só cadastro/listagem/edição/check-in de visitantes — sem dashboard, sem leitor de QR,
+  sem exclusão) e `leitor` (só o leitor de QR/registro de presença — sem lista de
+  visitantes, sem dashboard). `AreaRestrita` recebe `papeisPermitidos` por página e nega
   acesso (mostrando o motivo) se o administrador logado não tiver o papel exigido; em
-  `Credenciamento.jsx`, o botão "Excluir" também só aparece para `administrador.papel
+  `admin/Credenciamento.jsx`, o botão "Excluir" também só aparece para `administrador.papel
   === "admin"` — reforço de UX, já que a API rejeita a chamada de qualquer forma.
 - Tokens nunca são logados. Guardá-los em `localStorage` (em vez de um cookie
   `httpOnly`) é uma escolha deliberada deste projeto para simplificar o cliente SPA;
@@ -159,35 +166,54 @@ só o lado do cliente.
 - **Localização**: mapa incorporado do Google Maps e endereço/ponto de referência.
 - **Footer**: contatos, endereço, data/horário e links rápidos.
 
-### 8.2 Painel Administrativo (`/admin`)
-- Login por e-mail/senha com JWT, restrito ao papel `admin` (mesmo componente
-  `AreaRestrita` usado no credenciamento, com `papeisPermitidos={["admin"]}`).
-- Cartões de resumo: total de inscritos, presenças registradas e cursos procurados.
-- **Dashboard analítico** (`Dashboard.jsx`) com:
-  - Filtros por vínculo com o Instituto, gênero e participação como colaborador.
-  - KPIs: inscritos, presenças, taxa de comparecimento, setores por visitante, colaboradores.
-  - Gráfico de barras de presença por setor/atração, com opção de segmentar por gênero.
-  - Tabela detalhada por setor (total, homens, mulheres, outros, alunos atuais, ex-alunos, % do público).
-  - Gráficos de rosca (SVG puro) do perfil dos inscritos por gênero e vínculo.
-  - Ranking dos cursos mais procurados e dos canais de divulgação mais eficazes.
+### 8.2 Hub administrativo (`/admin`)
+- Login por e-mail/senha com JWT (`AreaRestrita`, `papeisPermitidos={["admin",
+  "credenciamento", "leitor"]}`) — qualquer administrador autenticado chega até aqui.
+- Cartões de resumo (presenças registradas, usuário logado; visitantes inscritos só
+  aparece para `admin`/`credenciamento` — `leitor` não tem permissão para listar
+  visitantes, então o card nem tenta buscar esse número) e uma grade de cartões-link
+  (`admin/Hub.jsx`) para `/admin/dashboard`, `/admin/credenciamento` e `/admin/leitor`,
+  filtrada pelo papel: cada papel não-admin vê só o cartão da própria função (a API
+  também barra no servidor, isso é só a UI já refletindo).
 
-### 8.3 Painel de Credenciamento (`/credenciamento`)
-Área operacional usada pela equipe no dia do evento (papéis `admin` ou `credenciamento`),
-organizada em abas:
-- **Visitantes**: lista completa com busca (nome, e-mail, CPF, telefone, curso, código QR),
-  exibição/reimpressão do QR Code, edição de cadastro e exclusão (com confirmação em modal
-  — exclusão visível apenas para o papel `admin`).
-- **Credenciamento**: mesmo formulário de inscrição do hotsite, usado para cadastrar
-  visitantes que chegam sem inscrição prévia.
-- **Leitor QR** (`LeitorQr.jsx`): scanner de câmera (ou upload de imagem) que decodifica o
-  QR Code **sem depender de serviço externo** (implementação própria em `src/lib/qrcode`),
-  associa a leitura a um setor/turma selecionado, registra a presença via API e mostra o
-  histórico das últimas leituras com status (registrada / repetida / não encontrada).
-  Permite imprimir ou compartilhar a credencial da última leitura.
-- **Impressão** (`Crachas.jsx`): seleção de até 10 visitantes por vez para impressão de
-  crachás em folha A4 (grade 2 colunas), via janela de impressão do navegador.
+### 8.3 Dashboard (`/admin/dashboard`)
+Restrito ao papel `admin` (`papeisPermitidos={["admin"]}`). Renderiza
+`components/Dashboard/Dashboard.jsx`:
+- Filtros por vínculo com o Instituto, gênero e participação como colaborador.
+- KPIs: inscritos, presenças, taxa de comparecimento, setores por visitante, colaboradores.
+- Gráfico de barras de presença por setor/atração, com opção de segmentar por gênero.
+- Tabela detalhada por setor (total, homens, mulheres, outros, alunos atuais, ex-alunos, % do público).
+- Gráficos de rosca (SVG puro) do perfil dos inscritos por gênero e vínculo.
+- Ranking dos cursos mais procurados e dos canais de divulgação mais eficazes.
 
-### 8.4 Recursos transversais
+### 8.4 Credenciamento (`/admin/credenciamento`)
+Papéis `admin` ou `credenciamento`. Lista **todos** os visitantes com busca (nome,
+e-mail, CPF, telefone, curso, código QR) na tela principal — sem abas, tudo em uma
+página (`admin/Credenciamento.jsx`). O código do QR Code **não é gerado por este
+sistema**: o cadastro sempre entra com `codigoQr`/`dataChegada` nulos — eles só são
+preenchidos no check-in (ver `PATCH /visitantes/:id/checkin` em
+`web/specs/api.architecture.md`).
+- Botão **"+ Novo"** abre um modal largo com o mesmo `Formulario.jsx` do hotsite
+  (`mostrarQrCode={false}`), para cadastrar visitantes que chegam sem inscrição prévia;
+  a lista atualiza sozinha ao fechar (o cadastro já entrou no estado compartilhado do
+  `VisitantesContext`).
+- Por linha: **Checkin** (modal que pede o código do QR Code — originado fora do
+  sistema — e vincula ao visitante, sem validar contra nada além do próprio banco),
+  **QR Code** (só aparece se o visitante já tiver um código vinculado; modal com
+  reimpressão/compartilhamento), **Editar** (modal largo com os campos editáveis) e
+  **Excluir** (modal de confirmação, botão só visível para o papel `admin` — a API
+  também rejeita para `credenciamento`).
+
+### 8.5 Leitor de Presença (`/admin/leitor`)
+Papéis `admin` ou `leitor` (mudou de `credenciamento` para `leitor` — cada papel
+não-admin agora acessa só a própria função). Renderiza `components/LeitorQr/LeitorQr.jsx`:
+scanner de câmera (ou upload de imagem) que decodifica o QR Code **sem depender de
+serviço externo** (implementação própria em `src/lib/qrcode`), associa a leitura a um
+setor/turma selecionado, registra a presença via API e mostra o histórico das últimas
+leituras com status (registrada / repetida / não encontrada). Permite imprimir ou
+compartilhar a credencial da última leitura.
+
+### 8.6 Recursos transversais
 - **QR Code**: geração (`qrcode`/`qrcode.react`) e leitura própria (binarização, detecção de
   padrões de posicionamento, correção de erro Reed-Solomon, decodificação de dados —
   `src/lib/qrcode/*`), com testes unitários em `__tests__/decodificador.test.js`.

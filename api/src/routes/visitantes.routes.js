@@ -6,6 +6,7 @@ import { authenticatedLimiter, publicWriteLimiter } from "../middlewares/rateLim
 import { validate } from "../middlewares/validate.js";
 import {
   atualizarVisitanteSchema,
+  checkinSchema,
   criarVisitanteSchema,
   idParamSchema,
   listarVisitantesQuerySchema,
@@ -49,6 +50,15 @@ router.delete(
   authenticatedLimiter,
   validate(idParamSchema, "params"),
   visitantesController.remover,
+);
+
+router.patch(
+  "/:id/checkin",
+  authorize("admin", "credenciamento"),
+  authenticatedLimiter,
+  validate(idParamSchema, "params"),
+  validate(checkinSchema),
+  visitantesController.checkin,
 );
 
 export default router;

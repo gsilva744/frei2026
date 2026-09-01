@@ -355,33 +355,41 @@ function alterarCampo(evento) {
         {enviando ? "Salvando..." : "Confirmar inscrição"}
       </button>
 
-      {visitanteCadastrado && ( 
-        <div className="formulario-mensagem"> 
-        <p> Inscrição confirmada, 
-          <strong>{visitanteCadastrado.nome}</strong>! 
-        </p> 
-        
-        {visitanteCadastrado.salvoSomenteNesteDispositivo && ( 
-          
-          <p className="formulario-erro"> O banco não respondeu: esta inscrição ficou salva somente neste dispositivo. </p>
-          )} 
-          
-          {mostrarQrCode && ( 
-            <> <div id="qr-code-visitante"> <QRCodeVisitante codigo={visitanteCadastrado.codigoQr} tamanho={180} /> 
-            
-            </div>
-            
-            <p className="formulario-codigo"> {visitanteCadastrado.codigoQr} </p> 
-            
-            <button type="button" className="botao-azul formulario-baixar-qr" onClick={baixarQrCode} > Baixar meu QR Code </button> 
-            <br />
-            <p className="formulario-instrucao">
-              Guarde este QR Code. Ele será utilizado para registrar sua presença na feira.
+      {visitanteCadastrado && (
+        <div className="formulario-mensagem">
+          <p>
+            Inscrição confirmada, <strong>{visitanteCadastrado.nome}</strong>!
+          </p>
+
+          {visitanteCadastrado.salvoSomenteNesteDispositivo && (
+            <p className="formulario-erro">
+              O banco não respondeu: esta inscrição ficou salva somente neste dispositivo.
             </p>
-            
-            </> )} 
-            </div> 
           )}
+
+          {mostrarQrCode && visitanteCadastrado.codigoQr && (
+            <>
+              <div id="qr-code-visitante">
+                <QRCodeVisitante codigo={visitanteCadastrado.codigoQr} tamanho={180} />
+              </div>
+
+              <p className="formulario-codigo">{visitanteCadastrado.codigoQr}</p>
+
+              <button
+                type="button"
+                className="botao-azul formulario-baixar-qr"
+                onClick={baixarQrCode}
+              >
+                Baixar meu QR Code
+              </button>
+              <br />
+              <p className="formulario-instrucao">
+                Guarde este QR Code. Ele será utilizado para registrar sua presença na feira.
+              </p>
+            </>
+          )}
+        </div>
+      )}
 
             </form>
           );

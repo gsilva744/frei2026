@@ -2,7 +2,7 @@ import { pool } from "../config/database.js";
 
 const COLUNAS = `
   id, nome, email, cpf, telefone, vinculo, como_soube, genero, curso_interesse,
-  participa_como_colaborador, codigo_qr, qr_code_svg, criado_em, atualizado_em
+  participa_como_colaborador, data_chegada, codigo_qr, qr_code_svg, criado_em, atualizado_em
 `;
 
 const COLUNA_POR_CAMPO = {
@@ -101,5 +101,15 @@ export async function atualizar(id, camposParaAtualizar, agora) {
 
 export async function remover(id) {
   const [resultado] = await pool.execute(`DELETE FROM visitantes WHERE id = ?`, [id]);
+  return resultado.affectedRows;
+}
+
+/* Vincula um código QR (originado fora do sistema) ao visitante e marca a chegada.
+ * Não há verificação de correspondência com nada além da restrição UNIQUE do banco. */
+export async function registrarCheckin(id, codigoQr, agora) {
+  const [resultado] = await pool.execute(
+    `UPDATE visitantes SET codigo_qr = ?, data_chegada = ?, atualizado_em = ? WHERE id = ?`,
+    [codigoQr, agora, agora, id],
+  );
   return resultado.affectedRows;
 }
