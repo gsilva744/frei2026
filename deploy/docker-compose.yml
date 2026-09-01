@@ -1,0 +1,63 @@
+name: feira-profissoes
+
+
+services:
+
+  feira-mysql:
+    container_name: feira-mysql
+    image: mysql:8.0
+    env_file:
+      - ./environment/mysql/.env
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    networks:
+      - public
+
+
+  # feira-api:
+  #   container_name: feira-api
+  #   build:
+  #     context: ../api
+  #   env_file:
+  #     - ./environment/api/.env
+  #   restart: unless-stopped
+  #   depends_on:
+  #     feira-mysql:
+  #       condition: service_healthy
+  #   ports:
+  #     - "5050:5050"
+  #   networks:
+  #     - public
+
+
+  # feira-web:
+  #   container_name: feira-web
+  #   build:
+  #     context: ../web
+  #     args:
+  #       # Embutida no bundle do cliente em tempo de build — precisa apontar para a
+  #       # URL pela qual o navegador vai acessar a API (não o nome do serviço Docker).
+  #       VITE_API_URL: ${VITE_API_URL:-http://localhost:5050}
+  #   restart: unless-stopped
+  #   env_file:
+  #     - ./environment/web/.env
+  #   depends_on:
+  #     - feira-api
+  #   ports:
+  #     - "3000:3000"
+  #   networks:
+  #     - public
+
+
+networks:
+  public:
+    driver: bridge
+
+

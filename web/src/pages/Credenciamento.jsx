@@ -23,7 +23,7 @@ const abas = [
 
 const nomesDeCursos = Array.from(new Set(cursos.map((curso) => curso.nome)));
 
-function PainelCredenciamento({ sair }) {
+function PainelCredenciamento({ sair, administrador }) {
   const {
     visitantes,
     presencas,
@@ -32,6 +32,7 @@ function PainelCredenciamento({ sair }) {
     atualizarVisitante,
     removerVisitante,
   } = useVisitantes();
+  const podeExcluir = administrador?.papel === "admin";
   const [abaAtiva, setAbaAtiva] = useState("visitantes");
   const [busca, setBusca] = useState("");
   const [visitanteQrCode, setVisitanteQrCode] = useState(null);
@@ -231,12 +232,14 @@ function PainelCredenciamento({ sair }) {
                             >
                               Editar
                             </button>
-                            <button
-                              className="admin-acao admin-acao-excluir"
-                              onClick={() => setVisitanteExclusao(visitante)}
-                            >
-                              Excluir
-                            </button>
+                            {podeExcluir && (
+                              <button
+                                className="admin-acao admin-acao-excluir"
+                                onClick={() => setVisitanteExclusao(visitante)}
+                              >
+                                Excluir
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -369,8 +372,11 @@ function Credenciamento() {
     <AreaRestrita
       titulo="Área de Credenciamento"
       descricao="Acesso restrito à equipe da feira. Informe suas credenciais."
+      papeisPermitidos={["admin", "credenciamento"]}
     >
-      {({ sair }) => <PainelCredenciamento sair={sair} />}
+      {({ sair, administrador }) => (
+        <PainelCredenciamento sair={sair} administrador={administrador} />
+      )}
     </AreaRestrita>
   );
 }

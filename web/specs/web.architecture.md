@@ -14,8 +14,10 @@ O projeto é uma aplicação full-stack única que cobre três públicos diferen
    visitantes no local, ler QR Codes de presença e imprimir crachás no dia do evento.
 
 Toda a interface (site + telas restritas) é renderizada pelo mesmo app React com
-**SSR** via TanStack Start, e toda a persistência passa por uma **única API HTTP interna**
-(`/api/feira/*`) implementada no próprio worker do servidor.
+**SSR** via TanStack Start. Este projeto **não acessa banco de dados nem implementa
+autenticação**: toda a persistência e a autenticação (JWT) são feitas pela API separada
+em `../api` (Node.js + Express + MySQL — ver `web/specs/api.architecture.md`). `web` é
+puramente um cliente HTTP dessa API.
 
 ## 2. Stack tecnológica
 
@@ -26,8 +28,8 @@ Toda a interface (site + telas restritas) é renderizada pelo mesmo app React co
 | Estilo | Tailwind CSS 4 + CSS modules por componente (`*.css`) + Radix UI / shadcn (`src/components/ui`) |
 | Estado de dados no cliente | TanStack Query (QueryClient no root) + Context API própria (`VisitantesContext`) |
 | Formulários | React Hook Form + Zod (disponíveis via shadcn `form.tsx`) |
-| Banco de dados | MySQL (via `mysql2/promise`), acessado com um adaptador que imita a API do Cloudflare D1 |
-| Runtime de produção | Node (`node .output/server/index.mjs`) — projeto preparado para publicação como Cloudflare Worker (`wrangler.toml.example`), embora o banco atual seja MySQL, não D1 |
+| Autenticação | JWT emitido pela API (`../api`), guardado no `localStorage` do navegador e renovado automaticamente por `services/apiFeira.js` |
+| Runtime de produção | Node (`node .output/server/index.mjs`) — projeto preparado para publicação como Cloudflare Worker (`wrangler.toml.example`); não requer nenhum binding de banco, só a variável de build `VITE_API_URL` |
 | Leitura de QR Code | Implementação própria em `src/lib/qrcode/*` (sem dependência externa), usada pela câmera/leitor |
 | Geração de QR Code | `qrcode` (SVG salvo no banco) e `qrcode.react` (renderização na tela) |
 | Lint/format | ESLint 9 + Prettier |
@@ -42,16 +44,15 @@ src/
 ├── components/     Componentes visuais do site e da área restrita
 │   └── ui/         Biblioteca shadcn/Radix (accordion, dialog, table, sidebar, etc.)
 ├── css/            Estilos globais das áreas restritas (admin.css, credenciamento.css) e global.css
-├── data/           Conteúdo estático (cursos, atrações, depoimentos, setores, parceiros)
+├── data/           Conteúdo estático (cursos, atrações, depoimentos, gêneros/vínculos, parceiros)
 ├── hooks/          Hooks utilitários (use-mobile)
 ├── lib/            Utilitários de baixo nível: captura de erro, página de erro, decodificador de QR Code, utils gerais
 ├── pages/          Componentes de página (Home, Admin, Credenciamento)
 ├── routes/         Definições de rota do TanStack Router (file-based)
-├── server/         Código exclusivo de servidor: API da feira e adaptador MySQL
-├── services/       Camada de comunicação do cliente com a API (`apiFeira.js`)
-├── utils/          Contexto de visitantes, geração de código, impressão/compartilhamento
+├── services/       Camada de comunicação com a API externa: login/JWT, visitantes, presenças, setores, dashboard (`apiFeira.js`)
+├── utils/          Contexto de visitantes (VisitantesContext), geração de código local, impressão/compartilhamento
 ├── router.tsx      Fábrica do router (React Router + QueryClient)
-├── server.ts       Entrada do worker: autenticação Basic das rotas restritas + roteamento da API + SSR
+├── server.ts       Entrada do worker: apenas SSR + tratamento de erro (sem autenticação nem banco)
 └── start.ts        Middlewares globais do TanStack Start (tratamento de erro + CSRF)
 ```
 
@@ -60,11 +61,13 @@ src/
 | Rota | Página | Proteção | Descrição |
 | --- | --- | --- | --- |
 | `/` | `Home.jsx` | Pública | Hotsite: hero, sobre, livro dourado, atrações, cursos, depoimentos, formulário de inscrição, localização, footer |
-| `/admin` | `Admin.jsx` | Basic Auth | Dashboard analítico de inscritos/presenças |
-| `/credenciamento` | `Credenciamento.jsx` | Basic Auth | Painel operacional do dia do evento (cadastro local, leitor de QR, impressão) |
+| `/admin` | `Admin.jsx` | JWT, papel `admin` | Dashboard analítico de inscritos/presenças |
+| `/credenciamento` | `Credenciamento.jsx` | JWT, papéis `admin` ou `credenciamento` | Painel operacional do dia do evento (cadastro local, leitor de QR, impressão) |
 
-A tela de login (`AreaRestrita`/`Acesso.jsx`) é a mesma para `/admin` e `/credenciamento`, mudando
-apenas título/descrição. A validação da senha acontece contra o servidor (ver seção 6).
+A tela de login (`AreaRestrita`/`Acesso.jsx`) é a mesma para `/admin` e `/credenciamento`,
+mudando apenas título, descrição e os papéis aceitos (`papeisPermitidos`). A validação de
+e-mail/senha acontece na API (ver seção 6); se o administrador logado não tiver o papel
+exigido pela rota, a tela mostra uma mensagem de acesso negado em vez do conteúdo.
 
 ## 5. Fluxo de dados no cliente
 
@@ -75,79 +78,69 @@ Componentes de UI
 VisitantesContext (src/utils/VisitantesContext.jsx)
    │  chama funções de
    ▼
-src/services/apiFeira.js  ──fetch──▶  /api/feira/*  (src/server/apiFeira.ts)
-                                            │
-                                            ▼
-                                   src/server/mysql.ts ──▶ MySQL
+src/services/apiFeira.js  ──fetch──▶  {VITE_API_URL}/api/*  (projeto ../api)
 ```
 
-- `VisitantesContext` é o único ponto de estado compartilhado de visitantes/presenças.
-  Ele hidrata a lista a partir do `localStorage` (contingência) e, em paralelo, tenta
-  carregar os dados reais do banco (`GET /api/feira/dados`) sempre que a autorização
-  restrita muda (evento `feira2026-autorizacao`).
+- `VisitantesContext` é o único ponto de estado compartilhado de visitantes/presenças/
+  setores. Ele hidrata visitantes/presenças a partir do `localStorage` (contingência) e,
+  em paralelo, tenta carregar os dados reais da API sempre que a sessão muda (evento
+  `feira2026-sessao`, disparado ao logar, deslogar ou perder a sessão).
 - Toda mutação (criar visitante, editar, excluir, registrar presença) primeiro tenta a
-  API; se falhar, o cadastro de visitante cai para o dispositivo local e a UI avisa que
-  a inscrição "ficou salva somente neste dispositivo".
-- `src/services/apiFeira.js` é a única camada que conhece a URL da API e o cabeçalho de
-  autorização; nenhum componente monta requisições HTTP diretamente.
+  API; se a criação falhar, o cadastro de visitante cai para o dispositivo local e a UI
+  avisa que a inscrição "ficou salva somente neste dispositivo".
+- `src/services/apiFeira.js` é a única camada que conhece a URL da API e o token de
+  acesso; nenhum componente monta requisições HTTP diretamente. Essa mesma camada
+  renova o access token automaticamente (usando o refresh token) quando uma chamada
+  autenticada recebe `401`, repetindo a requisição original uma única vez antes de
+  desistir e encerrar a sessão.
 
 ## 6. Autenticação e autorização
 
-- **Nível de rota (`/admin`, `/credenciamento`)**: `src/server.ts` intercepta a requisição
-  antes do SSR. Quando o cliente envia o cabeçalho `X-Restricted-Area-Check: 1` (disparado
-  pelo formulário de login em `Acesso.jsx`), o servidor valida `Authorization: Basic` contra
-  `RESTRICTED_AREA_USERNAME`/`RESTRICTED_AREA_PASSWORD` usando comparação de tempo constante
-  (`constantTimeEqual`). A página em si (SSR) é sempre servida sem bloqueio — só a checagem
-  de login é protegida — para não travar a exibição do próprio formulário.
-- Credenciais válidas ficam guardadas em `sessionStorage` no navegador (`feira2026-autorizacao`,
-  codificadas em Base64) e reenviadas em toda chamada à API que exige autorização.
-- **Nível de API (`/api/feira/*`)**: cada rota decide individualmente se exige autorização
-  (`autorizado`, calculado a partir do mesmo cabeçalho Basic). `POST /visitantes` (inscrição
-  pública) é a única rota que não exige login; leitura completa, edição, exclusão de
-  visitantes e registro de presença exigem a credencial da equipe.
-- Não existe múltiplos usuários/perfis — é uma única credencial compartilhada pela equipe
-  organizadora, configurada via variáveis de ambiente/segredos, nunca no código-fonte.
+Toda autenticação vive na API (`../api`), não em `web`. Ver `web/specs/api.architecture.md`
+para o desenho completo (JWT, rotação de refresh token, rate limit); aqui documentamos
+só o lado do cliente.
 
-## 7. API interna (`/api/feira`)
+- **Login**: `Acesso.jsx` (componente `AreaRestrita`) envia e-mail + senha para
+  `POST {VITE_API_URL}/api/auth/login`. A API devolve um `accessToken` (curta duração),
+  um `refreshToken` e os dados do administrador (`{ id, nome, email, papel }`).
+- **Guarda da sessão**: `services/apiFeira.js` grava `{ accessToken, refreshToken,
+  administrador }` em uma única chave do **localStorage** (`feira2026-sessao`) e dispara
+  o evento `feira2026-sessao` sempre que a sessão muda (login, logout, renovação,
+  expiração). `VisitantesContext` e `Acesso.jsx` escutam esse evento para reagir —
+  por isso o login **persiste entre recarregamentos da página** (diferente do antigo
+  Basic Auth por `sessionStorage`, que exigia login a cada visita).
+- **Renovação automática**: toda chamada autenticada que recebe `401` tenta
+  `POST /api/auth/refresh` uma única vez com o refresh token guardado; se funcionar, a
+  chamada original é repetida com o novo access token. Se a renovação também falhar
+  (refresh expirado/revogado), a sessão local é apagada e a UI volta para a tela de
+  login.
+- **Logout**: `sair()` chama `POST /api/auth/logout` (melhor esforço — revoga o refresh
+  token no servidor) e sempre limpa a sessão local, mesmo se a chamada falhar.
+  `VisitantesContext` também limpa o cache local de visitantes/presenças
+  (`localStorage`) nesse momento, para não manter dados de visitantes acessíveis no
+  dispositivo além do necessário.
+- **Papéis**: `admin` (acesso total, incluindo dashboard e exclusão de visitantes) e
+  `credenciamento` (cadastro, listagem/edição de visitantes, leitor de QR — sem
+  dashboard nem exclusão). `AreaRestrita` recebe `papeisPermitidos` por página e nega
+  acesso (mostrando o motivo) se o administrador logado não tiver o papel exigido; em
+  `Credenciamento.jsx`, o botão "Excluir" também só aparece para `administrador.papel
+  === "admin"` — reforço de UX, já que a API rejeita a chamada de qualquer forma.
+- Tokens nunca são logados. Guardá-los em `localStorage` (em vez de um cookie
+  `httpOnly`) é uma escolha deliberada deste projeto para simplificar o cliente SPA;
+  o preço é exposição a roubo de token via XSS, por isso nenhuma entrada de usuário é
+  renderizada como HTML/SVG bruto em nenhum componente (ver seção 9.4).
 
-Implementada em `src/server/apiFeira.ts`, chamada antes do roteamento SSR (`server.ts`).
+## 7. Banco de dados
 
-| Método | Rota | Auth | Função |
-| --- | --- | --- | --- |
-| GET | `/api/feira/dados` | Sim | Lista todos os visitantes e presenças (usada pelo dashboard e pelas telas restritas) |
-| POST | `/api/feira/visitantes` | Não | Cria um novo visitante (inscrição pública ou credenciamento no local) |
-| PATCH | `/api/feira/visitantes/:id` | Sim | Atualiza campos editáveis de um visitante |
-| DELETE | `/api/feira/visitantes/:id` | Sim | Remove um visitante (cascata remove presenças relacionadas) |
-| POST | `/api/feira/presencas` | Sim | Registra a presença de um visitante em um setor a partir do código QR lido |
+`web` não acessa banco de dados. Toda a estrutura (`visitantes`, `presencas`, `setores`,
+`administradores`, `refresh_tokens`) vive na API (`../api/db/migrations`), documentada em
+`web/specs/api.architecture.md`. O único dado replicado localmente é a lista de setores
+(`GET /api/setores`, pública) e a lista completa de visitantes/presenças, carregadas via
+`services/apiFeira.js` apenas quando há sessão autenticada.
 
-Validações no servidor: nome (3–100 caracteres), e-mail (regex), CPF (dígito verificador
-completo), telefone (10–11 dígitos), código QR (5–120 caracteres). O servidor sempre gera
-`id` e, quando necessário, `codigoQr` — nunca confia nesses valores vindos do cliente.
-Erros de banco (`ER_DUP_ENTRY`, `ER_NO_SUCH_TABLE`, etc.) são traduzidos para mensagens
-amigáveis em português.
+## 8. Funcionalidades do projeto
 
-## 8. Banco de dados
-
-Duas tabelas (`database/001_feira2026.sql`, escrito originalmente para Cloudflare D1/SQLite,
-mas hoje a implementação ativa (`src/server/mysql.ts`) conecta em **MySQL** via `mysql2`):
-
-- **`visitantes`** — uma linha por inscrição: dados de contato (nome, email, cpf, telefone),
-  respostas do formulário (vínculo com o Instituto, como soube da feira, gênero, curso de
-  interesse), `codigo_qr` único, o SVG do QR Code (para reimpressão sem regerar) e timestamps.
-  CPF e código QR são únicos.
-- **`presencas`** — uma linha por leitura de QR Code em um setor/atração, com chave
-  estrangeira para `visitantes` (`ON DELETE CASCADE`) e restrição única
-  `(visitante_id, setor)` para impedir presença duplicada na mesma atração.
-
-Configuração via `DATABASE_URL` ou variáveis `MYSQL_HOST`/`MYSQL_PORT`/`MYSQL_DATABASE`/
-`MYSQL_USER`/`MYSQL_PASSWORD`/`MYSQL_SSL` (nunca com prefixo `VITE_`, pois são lidas somente
-no servidor). O adaptador (`getMySqlDatabase`) expõe uma API `prepare().bind().run()/all()/first()`
-equivalente à do Cloudflare D1, permitindo trocar o backend de banco sem reescrever
-`apiFeira.ts`.
-
-## 9. Funcionalidades do projeto
-
-### 9.1 Hotsite público (`/`)
+### 8.1 Hotsite público (`/`)
 - **Header** com navegação por âncoras (Início, Sobre, Programação, Local, Cursos,
   Inscrição, Contato), efeito de encolhimento ao rolar e menu mobile.
 - **Hero** com data/horário do evento e chamadas para ação ("Quero participar", "Saiba mais").
@@ -166,8 +159,9 @@ equivalente à do Cloudflare D1, permitindo trocar o backend de banco sem reescr
 - **Localização**: mapa incorporado do Google Maps e endereço/ponto de referência.
 - **Footer**: contatos, endereço, data/horário e links rápidos.
 
-### 9.2 Painel Administrativo (`/admin`)
-- Login por Basic Auth (mesmo componente `AreaRestrita` usado no credenciamento).
+### 8.2 Painel Administrativo (`/admin`)
+- Login por e-mail/senha com JWT, restrito ao papel `admin` (mesmo componente
+  `AreaRestrita` usado no credenciamento, com `papeisPermitidos={["admin"]}`).
 - Cartões de resumo: total de inscritos, presenças registradas e cursos procurados.
 - **Dashboard analítico** (`Dashboard.jsx`) com:
   - Filtros por vínculo com o Instituto, gênero e participação como colaborador.
@@ -177,10 +171,12 @@ equivalente à do Cloudflare D1, permitindo trocar o backend de banco sem reescr
   - Gráficos de rosca (SVG puro) do perfil dos inscritos por gênero e vínculo.
   - Ranking dos cursos mais procurados e dos canais de divulgação mais eficazes.
 
-### 9.3 Painel de Credenciamento (`/credenciamento`)
-Área operacional usada pela equipe no dia do evento, organizada em abas:
+### 8.3 Painel de Credenciamento (`/credenciamento`)
+Área operacional usada pela equipe no dia do evento (papéis `admin` ou `credenciamento`),
+organizada em abas:
 - **Visitantes**: lista completa com busca (nome, e-mail, CPF, telefone, curso, código QR),
-  exibição/reimpressão do QR Code, edição de cadastro e exclusão (com confirmação em modal).
+  exibição/reimpressão do QR Code, edição de cadastro e exclusão (com confirmação em modal
+  — exclusão visível apenas para o papel `admin`).
 - **Credenciamento**: mesmo formulário de inscrição do hotsite, usado para cadastrar
   visitantes que chegam sem inscrição prévia.
 - **Leitor QR** (`LeitorQr.jsx`): scanner de câmera (ou upload de imagem) que decodifica o
@@ -191,7 +187,7 @@ equivalente à do Cloudflare D1, permitindo trocar o backend de banco sem reescr
 - **Impressão** (`Crachas.jsx`): seleção de até 10 visitantes por vez para impressão de
   crachás em folha A4 (grade 2 colunas), via janela de impressão do navegador.
 
-### 9.4 Recursos transversais
+### 8.4 Recursos transversais
 - **QR Code**: geração (`qrcode`/`qrcode.react`) e leitura própria (binarização, detecção de
   padrões de posicionamento, correção de erro Reed-Solomon, decodificação de dados —
   `src/lib/qrcode/*`), com testes unitários em `__tests__/decodificador.test.js`.
@@ -205,16 +201,16 @@ equivalente à do Cloudflare D1, permitindo trocar o backend de banco sem reescr
   incluindo o caso em que o h3 (motor HTTP do Nitro) "engole" exceções e as transforma em
   JSON genérico — o servidor detecta esse padrão e força uma página de erro real.
 
-## 10. Deploy e ambiente
+## 9. Deploy e ambiente
 
-- Local: `npm run dev` (Vite dev server, porta padrão 8080), lendo `.env` para credenciais
-  de área restrita e conexão MySQL.
+- Local: `npm run dev` (Vite dev server, porta padrão 8080), lendo `.env` só para
+  `VITE_API_URL` — a API (`../api`) precisa estar rodando à parte.
 - Produção: `npm run build` gera `.output/`; `npm run start` roda `node .output/server/index.mjs`.
-- O projeto está preparado (`wrangler.toml.example`) para publicação como Cloudflare Worker,
-  cenário em que os segredos (`RESTRICTED_AREA_USERNAME/PASSWORD`) seriam cadastrados nas
-  variáveis do Cloudflare — mas o binding de banco `DB` (D1) descrito no README/SQL não é
-  mais o caminho ativo: a API atual (`apiFeira.ts`/`mysql.ts`) conecta em MySQL, então um
-  deploy real precisa expor as variáveis `DATABASE_URL`/`MYSQL_*` ao runtime escolhido.
+  `VITE_API_URL` precisa estar definida **em tempo de build** (é embutida no bundle do
+  cliente pelo Vite), apontando para a URL pública da API já publicada.
+- O projeto está preparado (`wrangler.toml.example`) para publicação como Cloudflare
+  Worker — sem nenhum binding de banco: `web` não guarda nenhum segredo (credencial de
+  administrador, segredo JWT, credencial de banco), tudo isso vive só em `../api`.
 - Este projeto está conectado ao Lovable (ver `AGENTS.md`): commits na branch conectada
   sincronizam com o editor Lovable — evitar reescrever histórico já publicado (force-push,
   rebase/amend/squash de commits enviados).

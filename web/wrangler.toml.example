@@ -2,8 +2,6 @@
 name = "feira-frei-2026"
 compatibility_date = "2026-08-26"
 
-# Crie um banco D1 no Cloudflare, substitua o database_id e mantenha o binding DB.
-[[d1_databases]]
-binding = "DB"
-database_name = "feira-frei-2026"
-database_id = "COLE_AQUI_O_ID_DO_SEU_BANCO_D1"
+# Este site não acessa banco de dados diretamente: toda a persistência é feita pela
+# API (projeto `api/`), publicada separadamente. Configure VITE_API_URL como variável
+# de build no Cloudflare Pages/Workers apontando para a URL pública dessa API.

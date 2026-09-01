@@ -2,10 +2,16 @@
 
 Hotsite da Feira Frei 2026, desenvolvido com React, TanStack Start e Vite.
 
+Este projeto **não acessa banco de dados diretamente**: toda a inscrição, credenciamento,
+leitura de presença e dashboard falam com a API separada em [`../api`](../api) (Node.js +
+Express + MySQL, autenticação por JWT). Veja `web/specs/api.architecture.md` para o
+detalhamento da API.
+
 ## Requisitos
 
 - Node.js 20 ou superior
 - npm
+- A API (`../api`) rodando e acessível — veja `../api/README.md`
 
 ## Executar localmente
 
@@ -21,14 +27,13 @@ Hotsite da Feira Frei 2026, desenvolvido com React, TanStack Start e Vite.
    cp .env.example .env
    ```
 
-3. Preencha o `.env`:
+3. Preencha o `.env` com a URL da API:
 
    ```env
-   RESTRICTED_AREA_USERNAME=seu-usuario
-   RESTRICTED_AREA_PASSWORD=sua-senha
+   VITE_API_URL=http://localhost:5050
    ```
 
-4. Inicie o projeto:
+4. Suba a API (em outro terminal, veja `../api/README.md`) e depois inicie o site:
 
    ```bash
    npm run dev
@@ -48,71 +53,33 @@ O site estará disponível no endereço informado pelo Vite, normalmente
 
 ## Área restrita
 
-As rotas `/admin` e `/credenciamento` são protegidas por autenticação básica no
-servidor. As credenciais nunca devem ser colocadas no código ou enviadas ao Git.
+As rotas `/admin` e `/credenciamento` exigem login (e-mail + senha) contra a API,
+autenticado por JWT. A sessão (access token + refresh token, renovados automaticamente
+pelo front-end) fica no **localStorage** do navegador, o que permite continuar logado
+entre recarregamentos da página — ao contrário do antigo Basic Auth por
+`sessionStorage`, que exigia login a cada visita.
 
-O arquivo `.env` serve apenas para desenvolvimento local e já está ignorado pelo
-Git. Use `.env.example` como modelo.
+Existem dois papéis de administrador, cadastrados na API (`npm run seed` em `../api`):
 
-### Deploy no Cloudflare
+- **`admin`**: acessa o painel `/admin` (dashboard analítico) e tudo que
+  `credenciamento` acessa, incluindo excluir visitantes.
+- **`credenciamento`**: acessa `/credenciamento` (cadastro no local, leitor de QR,
+  impressão de crachás, edição de visitantes) — sem acesso ao dashboard nem à exclusão
+  de visitantes.
 
-Cadastre os valores abaixo nas variáveis/secrets do projeto no Cloudflare:
+Nenhuma credencial (senha de administrador, segredo JWT, credencial de banco) vive
+neste projeto — tudo fica na API, configurada por `../api/.env`.
 
-```text
-RESTRICTED_AREA_USERNAME
-RESTRICTED_AREA_PASSWORD
-```
+## Inscrição pública e resiliência offline
 
-No deploy, o Cloudflare entrega esses valores diretamente ao worker. O arquivo
-`.env` local não é publicado e não configura credenciais em produção.
+A inscrição (`POST /visitantes` na API) é a única rota pública de escrita. O servidor
+sempre gera o `id` e o código QR — o navegador nunca envia esses valores.
 
-## Banco de dados: inscrições e presenças
-
-O projeto está preparado para o **Cloudflare D1** (SQLite). A estrutura foi
-escolhida porque o app já é publicado como um Worker Cloudflare e, assim, a
-API e o banco ficam no mesmo ambiente.
-
-1. Crie um banco D1 chamado, por exemplo, `feira-frei-2026`.
-2. Execute o arquivo [database/001_feira2026.sql](database/001_feira2026.sql)
-   no console SQL desse banco. Ele cria as tabelas e índices.
-3. Copie `wrangler.toml.example` para `wrangler.toml`, preencha o `database_id`
-   com o ID exibido pelo Cloudflare e publique a aplicação. O nome do binding
-   deve continuar sendo exatamente `DB`.
-4. Cadastre também `RESTRICTED_AREA_USERNAME` e
-   `RESTRICTED_AREA_PASSWORD` nos secrets do Cloudflare.
-
-Enquanto o binding `DB` ainda não existir, uma inscrição feita no site é
-mantida no navegador como contingência e a tela avisa isso. Para uso real em
-vários computadores, só considere a inscrição concluída após configurar o D1.
-
-### Tabelas e campos
-
-| Tabela       | Campo                                                | Conteúdo                                                           |
-| ------------ | ---------------------------------------------------- | ------------------------------------------------------------------ |
-| `visitantes` | `id`                                                 | Identificador técnico do visitante.                                |
-|              | `nome`, `email`, `cpf`, `telefone`                   | Dados de contato enviados pelo formulário.                         |
-|              | `vinculo`, `como_soube`, `genero`, `curso_interesse` | Respostas do formulário.                                           |
-|              | `codigo_qr`                                          | Texto único gravado no QR Code.                                    |
-|              | `qr_code_svg`                                        | Imagem SVG do QR Code, enviada junto do cadastro para reimpressão. |
-|              | `criado_em`, `atualizado_em`                         | Datas em ISO 8601.                                                 |
-| `presencas`  | `id`, `visitante_id`, `codigo_qr`                    | Identificação/auditoria da leitura.                                |
-|              | `setor`                                              | Setor da atração onde houve leitura.                               |
-|              | `registrado_em`                                      | Data e hora da entrada, gerada pelo servidor.                      |
-
-`presencas` não permite duas entradas do mesmo visitante no mesmo setor. Ao
-remover um visitante manualmente, suas presenças também são removidas pela
-relação de banco.
-
-### Onde a conexão é mantida
-
-- `src/services/apiFeira.js`: única camada usada pela interface; os comentários
-  mostram o que cada requisição envia.
-- `src/server/apiFeira.ts`: validação, autorização e SQL da API.
-- `database/001_feira2026.sql`: estrutura que pode ser revisada e executada
-  manualmente.
-
-A inscrição pública só pode criar um visitante. Leitura de todos os cadastros,
-edição, exclusão e presença exigem a credencial da área restrita.
+Enquanto a API estiver indisponível, uma inscrição feita no site é mantida no navegador
+(`localStorage`) como contingência e a tela avisa isso. Para uso real durante o evento,
+só considere a inscrição concluída após a API confirmar o cadastro. Esse cache local de
+visitantes/presenças é apagado automaticamente ao fazer logout da área restrita, para
+não manter dados de visitantes acessíveis no dispositivo além do necessário.
 
 ## Estrutura principal
 
@@ -121,8 +88,8 @@ src/
 ├── components/   Componentes visuais do site
 ├── pages/        Páginas principais
 ├── routes/       Rotas da aplicação
-├── data/         Conteúdo estático
-├── utils/        Funções auxiliares
-├── services/     Comunicação da interface com a API do banco
-└── server.ts     Entrada do servidor e proteção das rotas restritas
+├── data/         Conteúdo estático (cursos, atrações, depoimentos, gêneros/vínculos)
+├── utils/        Funções auxiliares e o VisitantesContext (estado compartilhado)
+├── services/     Comunicação da interface com a API (login, visitantes, presenças, dashboard)
+└── server.ts     Entrada do servidor SSR (sem lógica de autenticação/banco)
 ```

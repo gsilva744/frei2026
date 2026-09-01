@@ -443,9 +443,9 @@ não tratada):
 
 ```env
 # Servidor
-PORT=3333
+PORT=5050
 NODE_ENV=development
-ALLOWED_ORIGINS=http://localhost:8080,https://feira.acaonsfatima.org.br
+ALLOWED_ORIGINS=http://localhost:3000,https://feira.acaonsfatima.org.br
 
 # MySQL
 DATABASE_URL=mysql://usuario:senha@localhost:3306/feira_frei_2026

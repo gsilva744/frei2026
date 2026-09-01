@@ -65,6 +65,7 @@ function Admin() {
     <AreaRestrita
       titulo="Painel Administrativo"
       descricao="Acesso exclusivo da administração. Faça login para continuar."
+      papeisPermitidos={["admin"]}
     >
       {({ sair }) => <PainelAdmin sair={sair} />}
     </AreaRestrita>

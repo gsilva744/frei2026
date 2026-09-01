@@ -1,73 +1,79 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import logoFeira from "../../assets/logoFrei.png";
-import { guardarAutorizacaoDoBanco, removerAutorizacaoDoBanco } from "../../services/apiFeira";
+import { entrar, sair as sairDaApi, sessaoAtual } from "../../services/apiFeira";
 import "./acesso.css";
 
-function AreaRestrita({ titulo, descricao, children }) {
-  const [liberado, setLiberado] = useState(false);
-  const [usuario, setUsuario] = useState("");
+const EVENTO_SESSAO = "feira2026-sessao";
+
+/* Área restrita da feira: exige um administrador logado (JWT) com um dos papéis em
+ * `papeisPermitidos`. A sessão é lida do localStorage a cada carregamento — por isso o
+ * login persiste entre recarregamentos da página, ao contrário do antigo Basic Auth por
+ * sessionStorage, que exigia login a cada visita. */
+function AreaRestrita({ titulo, descricao, papeisPermitidos = ["admin", "credenciamento"], children }) {
+  const [sessao, setSessao] = useState(null);
+  const [carregandoSessao, setCarregandoSessao] = useState(true);
+  const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
 
-  async function entrar(evento) {
+  useEffect(() => {
+    function atualizar() {
+      setSessao(sessaoAtual());
+      setCarregandoSessao(false);
+    }
+    atualizar();
+    window.addEventListener(EVENTO_SESSAO, atualizar);
+    return () => window.removeEventListener(EVENTO_SESSAO, atualizar);
+  }, []);
+
+  async function entrarNaArea(evento) {
     evento.preventDefault();
     setEnviando(true);
     setErro("");
 
     try {
-      const credenciais = window.btoa(`${usuario.trim()}:${senha}`);
-      const resposta = await fetch(window.location.pathname, {
-        headers: {
-          Authorization: `Basic ${credenciais}`,
-          "X-Restricted-Area-Check": "1",
-        },
-        cache: "no-store",
-      });
-
-      if (!resposta.ok) {
-        setErro(
-          resposta.status === 503
-            ? "O acesso restrito ainda não foi configurado no servidor."
-            : "Usuário ou senha inválidos.",
-        );
-        return;
-      }
-
-      // A mesma autorização é enviada apenas às rotas protegidas da API do banco
-      // durante esta sessão. Ela é apagada ao sair e ao fechar o navegador.
-      guardarAutorizacaoDoBanco(usuario.trim(), senha);
+      await entrar(email.trim(), senha);
       setSenha("");
-      setLiberado(true);
     } catch {
-      setErro("Não foi possível validar o acesso. Tente novamente.");
+      setErro("E-mail ou senha inválidos.");
     } finally {
       setEnviando(false);
     }
   }
 
   function sair() {
-    removerAutorizacaoDoBanco();
-    setUsuario("");
-    setSenha("");
-    setLiberado(false);
+    sairDaApi();
   }
 
-  if (!liberado) {
+  if (carregandoSessao) return null;
+
+  const autorizado = sessao && papeisPermitidos.includes(sessao.administrador?.papel);
+
+  if (!autorizado) {
+    const semPermissao = sessao && !papeisPermitidos.includes(sessao.administrador?.papel);
+
     return (
       <div className="acesso-pagina">
-        <form className="acesso-cartao" onSubmit={entrar}>
+        <form className="acesso-cartao" onSubmit={entrarNaArea}>
           <img src={logoFeira} alt="Logo da 6ª Feira das Profissões" />
           <h1>{titulo}</h1>
           <p>{descricao}</p>
 
+          {semPermissao && (
+            <p className="acesso-erro">
+              Sua conta ({sessao.administrador.email}) não tem permissão para esta área.
+            </p>
+          )}
+
           <div className="formulario-campo">
-            <label htmlFor="acesso-usuario">Usuário</label>
+            <label htmlFor="acesso-email">E-mail</label>
             <input
-              id="acesso-usuario"
-              value={usuario}
-              onChange={(evento) => setUsuario(evento.target.value)}
+              id="acesso-email"
+              type="email"
+              value={email}
+              onChange={(evento) => setEmail(evento.target.value)}
               autoComplete="username"
               required
             />
@@ -89,6 +95,11 @@ function AreaRestrita({ titulo, descricao, children }) {
           <button type="submit" className="botao-azul acesso-botao" disabled={enviando}>
             {enviando ? "Verificando..." : "Entrar"}
           </button>
+          {semPermissao && (
+            <button type="button" className="acesso-voltar" onClick={sair}>
+              Sair desta conta
+            </button>
+          )}
           <Link to="/" className="acesso-voltar">
             Voltar ao site
           </Link>
@@ -97,7 +108,7 @@ function AreaRestrita({ titulo, descricao, children }) {
     );
   }
 
-  return children({ sair });
+  return children({ sair, administrador: sessao.administrador });
 }
 
 export default AreaRestrita;

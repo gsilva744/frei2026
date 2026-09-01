@@ -15,6 +15,7 @@ import appCss from "../styles.css?url";
 import "../css/global.css";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { VisitantesProvider } from "../utils/VisitantesContext";
+import { Toaster } from "../components/ui/sonner";
 
 
 function NotFoundComponent() {
@@ -133,6 +134,7 @@ function RootComponent() {
       <VisitantesProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
+        <Toaster richColors position="top-center" />
       </VisitantesProvider>
     </QueryClientProvider>
   );

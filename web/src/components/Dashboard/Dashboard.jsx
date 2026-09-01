@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useVisitantes } from "../../utils/VisitantesContext";
-import { generos, setores, vinculos } from "../../data/setores";
+import { generos, vinculos } from "../../data/setores";
 import "./dashboard.css";
 
 function porcentagem(parte, total) {
@@ -54,7 +54,7 @@ function Kpi({ rotulo, valor, detalhe, destaque }) {
 }
 
 function Dashboard() {
-  const { visitantes = [], presencas = [] } = useVisitantes();
+  const { visitantes = [], presencas = [], setores = [] } = useVisitantes();
   const [filtroVinculo, setFiltroVinculo] = useState("Todos");
   const [filtroGenero, setFiltroGenero] = useState("Todos");
   const [porGenero, setPorGenero] = useState(false);
@@ -124,7 +124,7 @@ const inscritosFiltrados = useMemo(
   const linhasSetores = useMemo(
     () =>
       setores.map((setor) => {
-        const doSetor = presencasFiltradas.filter((presenca) => presenca.setor === setor.id);
+        const doSetor = presencasFiltradas.filter((presenca) => presenca.setorId === setor.id);
         return {
           ...setor,
           total: doSetor.length,

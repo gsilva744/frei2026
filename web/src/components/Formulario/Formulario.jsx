@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { cursos } from "../../data/cursos";
 import { canaisDivulgacao, generos, vinculos } from "../../data/setores";
 import QRCodeVisitante from "../QRCode/QRCodeVisitante";
@@ -171,8 +172,18 @@ function alterarCampo(evento) {
       });
       setVisitanteCadastrado(novoVisitante);
       setCampos(camposVazios);
+
+      if (novoVisitante.salvoSomenteNesteDispositivo) {
+        toast.warning("Sem conexão com o servidor", {
+          description: "A inscrição ficou salva só neste dispositivo. Sincronize assim que possível.",
+        });
+      } else {
+        toast.success("Inscrição confirmada!");
+      }
     } catch (erroCadastro) {
-      setErro(erroCadastro.message || "Não foi possível concluir a inscrição.");
+      const mensagem = erroCadastro.message || "Não foi possível concluir a inscrição.";
+      setErro(mensagem);
+      toast.error(mensagem);
     } finally {
       setEnviando(false);
     }

@@ -39,7 +39,7 @@ npm run dev     # desenvolvimento, com reload automático
 npm start       # produção
 ```
 
-A API sobe em `http://localhost:3333` (ou na porta definida em `PORT`).
+A API sobe em `http://localhost:5050` (ou na porta definida em `PORT`).
 `GET /health` responde `{"status":"ok"}` para checagem de disponibilidade.
 
 ## Estrutura

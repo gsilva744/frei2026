@@ -4,7 +4,7 @@
 -- (campo usado pelo front-end mas nunca gravado pela API anterior).
 
 CREATE TABLE IF NOT EXISTS administradores (
-  id CHAR(36) PRIMARY KEY,
+  id CHAR(36) PRIMARY KEY, -- UUID sem prefixo (randomUUID() puro)
   nome VARCHAR(120) NOT NULL,
   email VARCHAR(190) NOT NULL UNIQUE,
   senha_hash VARCHAR(100) NOT NULL,
@@ -43,7 +43,7 @@ INSERT INTO setores (id, nome, andar, cor, ordem) VALUES
 ON DUPLICATE KEY UPDATE nome = VALUES(nome);
 
 CREATE TABLE IF NOT EXISTS visitantes (
-  id CHAR(36) PRIMARY KEY,
+  id VARCHAR(40) PRIMARY KEY, -- prefixo "vis-" + UUID (idNovo em utils/qrCode.js): 4 + 36 = 40 chars
   nome VARCHAR(100) NOT NULL,
   email VARCHAR(255) NOT NULL,
   cpf VARCHAR(14) NOT NULL UNIQUE,
@@ -62,8 +62,8 @@ CREATE TABLE IF NOT EXISTS visitantes (
 CREATE INDEX idx_visitantes_codigo_qr ON visitantes(codigo_qr);
 
 CREATE TABLE IF NOT EXISTS presencas (
-  id CHAR(36) PRIMARY KEY,
-  visitante_id CHAR(36) NOT NULL,
+  id VARCHAR(40) PRIMARY KEY, -- prefixo "pre-" + UUID: 4 + 36 = 40 chars
+  visitante_id VARCHAR(40) NOT NULL,
   setor_id VARCHAR(40) NOT NULL,
   codigo_qr VARCHAR(120) NOT NULL,
   registrado_em DATETIME NOT NULL,

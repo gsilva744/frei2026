@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { lerQrCode } from "../../lib/qrcode";
 import { useVisitantes } from "../../utils/VisitantesContext";
-import { setores, nomeDoSetor } from "../../data/setores";
+import { nomeDoSetor } from "../../data/setores";
 import { abrirJanelaImpressao, compartilharCredencial } from "../../utils/impressao";
 import QRCodeVisitante from "../QRCode/QRCodeVisitante";
 import "./leitor.css";
@@ -9,17 +9,18 @@ import "./leitor.css";
 /*
  * Leitor de QR Code proprio (sem servicos externos).
  * A leitura é sempre vinculada a uma turma / setor de atração,
- * gerando os dados de presença analisados no dashboard.
+ * gerando os dados de presença analisados no dashboard. A lista de setores vem da API
+ * (GET /setores), carregada pelo VisitantesContext.
  */
 function LeitorQr() {
-  const { presencas, registrarPresenca } = useVisitantes();
+  const { presencas, registrarPresenca, setores } = useVisitantes();
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const fluxoRef = useRef(null);
   const cartaoRef = useRef(null);
   const ultimoCodigoRef = useRef("");
 
-  const [setorAtivo, setSetorAtivo] = useState(setores[0].id);
+  const [setorAtivo, setSetorAtivo] = useState("");
   const [cameraLigada, setCameraLigada] = useState(false);
   const [mensagem, setMensagem] = useState("");
   const [aviso, setAviso] = useState("");
@@ -27,9 +28,15 @@ function LeitorQr() {
   const [ultimaLeitura, setUltimaLeitura] = useState(null);
 
   const totalNoSetor = useMemo(
-    () => presencas.filter((presenca) => presenca.setor === setorAtivo).length,
+    () => presencas.filter((presenca) => presenca.setorId === setorAtivo).length,
     [presencas, setorAtivo],
   );
+
+  /* Os setores vêm da API de forma assíncrona; assim que carregarem, seleciona o
+   * primeiro como padrão (se nenhum já tiver sido escolhido). */
+  useEffect(() => {
+    if (!setorAtivo && setores.length > 0) setSetorAtivo(setores[0].id);
+  }, [setores, setorAtivo]);
 
   async function registrarLeitura(resultado) {
     if (resultado.texto === ultimoCodigoRef.current) return;
@@ -62,7 +69,7 @@ function LeitorQr() {
       setMensagem(`Presença registrada: ${retorno.visitante.nome}`);
       setAviso("");
     } else if (retorno.status === "repetido") {
-      setMensagem(`${retorno.visitante.nome} já estava registrado em ${nomeDoSetor(setorAtivo)}.`);
+      setMensagem(`${retorno.visitante.nome} já estava registrado em ${nomeDoSetor(setores, setorAtivo)}.`);
       setAviso("");
     } else {
       setMensagem("");
@@ -158,7 +165,7 @@ function LeitorQr() {
     if (!cartaoRef.current) return;
     const conteudo = `<div class="folha-grade">${cartaoRef.current.innerHTML}</div>`;
     const aberta = abrirJanelaImpressao({
-      titulo: `Credencial · ${nomeDoSetor(ultimaLeitura.setor)}`,
+      titulo: `Credencial · ${nomeDoSetor(setores, ultimaLeitura.setor)}`,
       conteudo,
     });
     if (!aberta) setAviso("Libere as janelas pop-up do navegador para imprimir.");
@@ -168,7 +175,7 @@ function LeitorQr() {
     const visitante = ultimaLeitura?.visitante;
     const resultado = await compartilharCredencial({
       titulo: "Credencial Feira de Profissões 2026",
-      texto: `${visitante ? visitante.nome : "Visitante"} · ${nomeDoSetor(ultimaLeitura.setor)} · Código ${ultimaLeitura.texto}`,
+      texto: `${visitante ? visitante.nome : "Visitante"} · ${nomeDoSetor(setores, ultimaLeitura.setor)} · Código ${ultimaLeitura.texto}`,
     });
     if (resultado === "copiado") setMensagem("Dados copiados para a área de transferência.");
   }
@@ -190,7 +197,7 @@ function LeitorQr() {
           ))}
         </div>
         <p className="leitor-setores-total">
-          {totalNoSetor} presença(s) registrada(s) em <strong>{nomeDoSetor(setorAtivo)}</strong>
+          {totalNoSetor} presença(s) registrada(s) em <strong>{nomeDoSetor(setores, setorAtivo)}</strong>
         </p>
       </div>
 
@@ -242,7 +249,7 @@ function LeitorQr() {
                   <p className="cracha-linha">
                     {ultimaLeitura.visitante?.cursoInteresse || "Curso não informado"}
                   </p>
-                  <p className="cracha-setor">{nomeDoSetor(ultimaLeitura.setor)}</p>
+                  <p className="cracha-setor">{nomeDoSetor(setores, ultimaLeitura.setor)}</p>
                   <p className="cracha-codigo">{ultimaLeitura.texto}</p>
                 </div>
               </div>
@@ -288,7 +295,7 @@ function LeitorQr() {
                   <span className="leitor-historico-texto">
                     {leitura.visitante ? leitura.visitante.nome : leitura.texto}
                   </span>
-                  <span className="leitor-historico-setor">{nomeDoSetor(leitura.setor)}</span>
+                  <span className="leitor-historico-setor">{nomeDoSetor(setores, leitura.setor)}</span>
                   <span
                     className={
                       leitura.status === "registrado"
