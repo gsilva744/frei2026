@@ -5,18 +5,34 @@ import bruna from "../assets/depoimento-bruna.webp";
 export const depoimentos = [
   {
     id: 1,
-    nome: "Bruno de Oliveira",
-    cargo: "Turma de Informática 2015 · Inglês 2016",
+    nome: "Brendow Mesquita de Jesus",
+    cargo: " Ex-aluno de Administração, 2012",
     foto: bruno,
     texto:
-      "Atualmente, além de executivo de TI, sou professor no Instituto, onde nossa missão é educar e preparar os jovens para o mercado de trabalho com habilidades técnicas, humanas e conceituais.",
+      "Fazer o curso de Administração foi muito importante para a minha formação. Aqui adquiri conhecimentos e experiências que me ajudaram a chegar mais preparado ao mercado de trabalho e à faculdade. Atualmente trabalho na área de projetos em uma multinacional, e tenho muito orgulho de ter iniciado minha trajetória aqui. Sou muito grato pela oportunidade de ter estudado na escola e recomendo aos alunos que aproveitem ao máximo cada aprendizado, pois o preparo faz toda a diferença no futuro.",
   },
   {
     id: 2,
-    nome: "Bruna Santos",
-    cargo: "Turma de Administração 2019",
+    nome: "Igor Ferreira de Amorim",
+    cargo: "Ex-aluno de Inglês, 2023 à 2025",
     foto: bruna,
     texto:
-      "A Feira de Profissões me ajudou a escolher meu curso. Conversar com professores e alunos deixou tudo mais claro e hoje trabalho na área que sempre sonhei.",
+      "Melhor lugar para aprender inglês! Sempre tive medo de aprender algo novo, principalmente o inglês. Porém, agarrei a oportunidade e posso dizer que o ensino do Instituto me deixou preparado para os desafios. Cheguei ao teste da Cambridge preparado! Agradeço ao Instituto e principalmente ao teacher Elison.",
+  },
+  {
+    id: 3,
+    nome: "Juliana Kaori",
+    cargo: "Ex-aluna de Comunicação Visual, 2012",
+    foto: bruna,
+    texto:
+      "A Escola do Frei doi minha porta de entrada para o desenvolvimento profissional. Uma conquista muito comemorada quando descobri que havia conseguido a vaga. Aqui encontrei a oportunidade de me desenvolver, de conhecer colegas com os mesmos sonhos e metas e professores que me motivaram a seguir na profissão. Tenho muito orgulho de dizer que me formei no Frei, de compartilhar minha conquista e vir aqui, depois de anos, palestrar, conversar com jovens no mesmo lugar que eu estive um dia, me faz sentir realizada.",
+  },
+  {
+    id: 4,
+    nome: "Ricardo Hessel de Araújo",
+    cargo: "Ex-aluno de Informática, 2006",
+    foto: bruna,
+    texto:
+      "Estudar aqui foi um divisor de águas na minha vida. A escola não só me deu base técnica, mas contribuiu diretamente para a formação do profissional e do cidadão que sou hoje. Foi aqui que tive meu primeiro direcionamento e minha primeira oportunidade no mercado de trabalho, que marcou o início da minha trajetória. Hoje, como Diretor Executivo no BTG Pactual, deixo o recado: tenham paciência, foquem no processo e estejam sempre abertos a aprender. O crescimento vem com o tempo e com a capacidade de se adaptar às oportunidades.",
   },
 ];

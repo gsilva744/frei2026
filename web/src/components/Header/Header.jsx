@@ -5,8 +5,7 @@ import "./header.css";
 
 const itensMenu = [
   { id: "inicio", nome: "Início" },
-  { id: "sobre", nome: "Sobre" },
-  { id: "programacao", nome: "Programação" },
+  { id: "programacao", nome: "Ver Programação" },
   { id: "local", nome: "Local" },
   { id: "cursos", nome: "Cursos" },
   { id: "inscricao", nome: "Inscrição" },

@@ -4,7 +4,7 @@ import Home from "../pages/Home";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "6ª Feira de Profissões 2026 | Instituto Social N. S. de Fátima" },
+      { title: "6ª Feira das Profissões 2026 | Instituto Social N. S. de Fátima" },
       {
         name: "description",
         content:

@@ -298,37 +298,36 @@ function alterarCampo(evento) {
           </select>
         </div>
 
-        {campos.vinculo === "Aluno atual" && (
-          <div className="formulario-campo">
-            <label htmlFor="participaComoColaborador">
-              Vai participar como colaborador da feira?
-            </label>
+        
+        <div className="formulario-campo">
+          <label htmlFor="participaComoColaborador">
+            Vai participar como colaborador da feira?
+          </label>
 
-            <select
-              id="participaComoColaborador"
-              name="participaComoColaborador"
-              value={
-                campos.participaComoColaborador === true
-                  ? "true"
-                  : campos.participaComoColaborador === false
-                    ? "false"
-                    : ""
-              }
-              onChange={(evento) =>
-                setCampos((anterior) => ({
-                  ...anterior,
-                  participaComoColaborador:
-                    evento.target.value === "true",
-                }))
-              }
-              required
-            >
-              <option value="">Selecione</option>
-              <option value="true">Sim</option>
-              <option value="false">Não</option>
-            </select>
-          </div>
-        )}
+          <select
+            id="participaComoColaborador"
+            name="participaComoColaborador"
+            value={
+              campos.participaComoColaborador === true
+                ? "true"
+                : campos.participaComoColaborador === false
+                  ? "false"
+                  : ""
+            }
+            onChange={(evento) =>
+              setCampos((anterior) => ({
+                ...anterior,
+                participaComoColaborador:
+                  evento.target.value === "true",
+              }))
+            }
+            required
+          >
+            <option value="">Selecione</option>
+            <option value="true">Sim</option>
+            <option value="false">Não</option>
+          </select>
+        </div>
 
         <div className="formulario-campo formulario-campo-largo">
           <label htmlFor="comoSoube">Como ficou sabendo da feira?</label>
