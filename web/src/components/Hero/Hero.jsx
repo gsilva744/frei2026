@@ -20,8 +20,8 @@ function Hero() {
           <button className="botao-amarelo" onClick={() => irParaSecao("inscricao")}>
             Quero participar
           </button>
-          <button className="hero-botao-claro" onClick={() => irParaSecao("sobre")}>
-            Saiba mais
+          <button className="hero-botao-claro" onClick={() => irParaSecao("programacao")}>
+            Ver Programação
           </button>
         </div>
       </div>

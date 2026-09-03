@@ -1,18 +1,18 @@
 import { BookOpen, GraduationCap, Wrench } from "lucide-react";
-import informatica from "../assets/informatica.jpg";
-import administracao from "../assets/administracao.jpg";
-import comunicacao_visual from "../assets/comunicacao_visual.jpg";
-import eletromecanica from "../assets/mecanica.jpeg";
+import informatica from "../assets/INFORMATICA_2.webp";
+import administracao from "../assets/ADMINISTRACAO.webp";
+import comunicacao_visual from "../assets/COMUNICACAO_VISUAL.webp";
+import eletromecanica from "../assets/ELETROMECANICA_DE_AUTOS_1.webp";
 import robotica from "../assets/robotica.jpeg";
-import informatica_basica from '../assets/informatica_basica.jpeg';
-import teens1 from "../assets/teens1.png";
-import teens2 from '../assets/teens2.png';
-import basico from '../assets/basico.jpeg';
-import basico_intemediario from '../assets/basico_intermediario.jpeg';
-import pre_intermediario from "../assets/pre-intermediario.png";
-import intermediario from '../assets/intermediario.png';
-import avancado from '../assets/avancado.png';
-import eletricista from '../assets/eletricista.png';
+import informatica_basica from '../assets/INFORMATICA_BASICA_-_EXCEL_2.webp';
+import teens1 from "../assets/ingles teens 1.jpg";
+import teens2 from '../assets/ingles 4.jpg';
+import basico from '../assets/ingles basico (noite).jpg';
+import basico_intemediario from '../assets/INGLES_BASICO_-_PRE-INTERMEDIARIO_2.webp';
+import pre_intermediario from "../assets/ingles basico pre intermediario.jpg";
+import intermediario from '../assets/ingles intermediario (sábado).jpg';
+import avancado from '../assets/ingles avançado1 (sábado).jpg';
+import eletricista from '../assets/ELETRICISTA_INSTALADOR.webp';
 
 /* Categorias de cursos usadas nos botões da seção (icone = componente Lucide) */
 export const categorias = [
@@ -67,7 +67,7 @@ export const cursos = [
     categoria: "Livres",
     nome: "Teens I",
     descricao:
-      "Aprenda inglês de forma prática e imersiva, desenvolvendo conversação, escrita, leitura e compreensão auditiva.",
+      "Aprenda desde cedo, desenvolvendo habilidades de fala, escuta, escrita e muito mais. Jovens de 13 e 14 anos.",
     imagem: teens1,
     link: "https://www.acaonsfatima.org.br/",
   },
@@ -77,7 +77,7 @@ export const cursos = [
     categoria: "Livres",
     nome: "Teens II",
     descricao:
-      "Aprofunde seus conhecimentos em inglês com foco em conversação, escrita, leitura e fluência.",
+      "Aprenda desde cedo, desenvolvendo habilidades de fala, escuta, escrita e muito mais. Jovens de 13 e 14 anos.",
     imagem: teens2,
     link: "https://www.acaonsfatima.org.br/",
   },
@@ -85,9 +85,9 @@ export const cursos = [
   {
     id: 7,
     categoria: "Livres",
-    nome: "Inglês Básico",
+    nome: "Inglês Básico (noite)",
     descricao:
-      "Aprenda inglês em um formato intensivo, com foco em conversação, escrita, leitura e compreensão auditiva.",
+      "Aprenda inglês para se comunicar com confiança no dia a dia e no trabalho. Adultos a partir de 18 anos.",
     imagem: basico,
     link: "https://www.acaonsfatima.org.br/",
   },
@@ -105,9 +105,9 @@ export const cursos = [
   {
     id: 9,
     categoria: "Livres",
-    nome: "Inglês Pré-Intermediário",
+    nome: "Inglês Pré-Intermediário (noite)",
     descricao:
-      "Aprimore suas habilidades em inglês e prepare-se para avançar ao nível intermediário.",
+      "Aprimore seu nível em inglês e tenha a oportunidade de aplicar suas habilidades no trabalho. Adultos apartir de 18 anos.",
     imagem: pre_intermediario,
     link: "https://www.acaonsfatima.org.br/",
   },
@@ -115,9 +115,9 @@ export const cursos = [
   {
     id: 10,
     categoria: "Livres",
-    nome: "Inglês Intermediário",
+    nome: "Inglês Intermediário (sábado)",
     descricao:
-      "Desenvolva sua fluência em inglês, aperfeiçoando conversação, escrita, leitura e compreensão auditiva.",
+      "Aprimore seu inglês e abra portas para viver o sonho de um intercânbio, e muito mais!. Jovens de 15 a 25 anos.",
     imagem: intermediario,
     link: "https://www.acaonsfatima.org.br/",
   },
@@ -125,7 +125,7 @@ export const cursos = [
   {
     id: 11,
     categoria: "Livres",
-    nome: "Inglês Avançado",
+    nome: "Inglês Avançado (sábado)",
     descricao:
       "Aperfeiçoe sua fluência em inglês com foco em comunicação avançada, interpretação e conversação.",
     imagem: avancado,

@@ -45,12 +45,12 @@ export const atracoesPorAndar = {
     { horario: "Sala 24", nome: "Comunicação Visual – Conheça o CorelDRAW – Photoshop - Fotografia: Ideias impactantes na prática" },
     { horario: "Sala 25", nome: "Informática – Hardware – Redes e Cibersegurança: Conectando pessoas, máquinas e possibilidades" },
     { horario: "Sala 26", nome: "Informática – Programação: Programando soluções transformadoras" },
-    { horario: "Sala 27", nome: "Elaboração de currículos - voluntários da empresa MAPFRE" },
+    { horario: "Sala 27", nome: "Elaboração de currículos - Voluntários da empresa MAPFRE" },
   ],
   andar3: [
     { horario: "Auditório", nome: "Simulação de Entrevista de Emprego – Voluntários da empresa MAPFRE E BISCOITÊ" },
     { horario: "Auditório", nome: "CATE – Emissão de Carteira de Trabalho e encaminhamento para vagas de Emprego" },
-    { horario: "Auditório", nome: "ADE SAMPA – atendimento aos Pequenos e Micro-empresários" },
+    { horario: "Auditório", nome: "ADE SAMPA – Atendimento aos Pequenos e Micro-empresários" },
     { horario: "Auditório", nome: "ADEMICON – Educação Financeira" },
   ],
 };

@@ -21,7 +21,7 @@ function Parceiros() {
       <div className="container">
 
         <h2 className="titulo-secao">
-          Parceiros
+          Patrocinadores
         </h2>
 
         <p className="parceiros-intro">

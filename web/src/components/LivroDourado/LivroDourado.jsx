@@ -1,4 +1,4 @@
-import livroDourado from "../../assets/freiEPessoas.webp";
+import livroDourado from "../../assets/FREI_COM_EX-ALUNOS.webp";
 import "./livro-dourado.css";
 
 const passos = [
@@ -57,7 +57,7 @@ function LivroDourado() {
           </ul>
 
           <button className="botao-amarelo" onClick={irParaInscricao}>
-            Quero deixar meu depoimento
+            Quero Participar
           </button>
         </div>
       </div>
