@@ -329,7 +329,7 @@ function alterarCampo(evento) {
           </select>
         </div>
 
-        <div className="formulario-campo formulario-campo-largo">
+        <div className="formulario-campo">
           <label htmlFor="comoSoube">Como ficou sabendo da feira?</label>
           <select
             id="comoSoube"

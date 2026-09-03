@@ -40,7 +40,7 @@ function LivroDourado() {
 
         <div className="livro-texto">
           <span className="livro-selo">Exclusivo para:</span>
-          <h2>EX-FREIANOS</h2>
+          <h2>Ex-Freianos</h2>
           <p>
             Você não é apenas um ex-aluno, é parte da nossa história. Volte para reencontrar amigos, professores e memórias especiais. Compartilhe sua trajetória e deixe sua lembrança registrada. Faça parte do nosso Livro de Ouro dos Ex-Freianos. Sua história continua aqui.
           </p>
