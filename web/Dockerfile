@@ -6,14 +6,15 @@
 
 FROM node:22-alpine AS build
 WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm install -g bun
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 COPY . .
 
 ARG VITE_API_URL
 ENV VITE_API_URL=${VITE_API_URL}
 ENV NITRO_PRESET=node-server
-RUN npm run build
+RUN bun run build
 
 # O build do nitro (preset node-server) gera um servidor autocontido em
 # .output/server — não depende de node_modules em tempo de execução.
