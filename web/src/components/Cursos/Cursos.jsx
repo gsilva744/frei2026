@@ -39,7 +39,7 @@ function Cursos() {
 
         <div className="cursos-grade" key={categoriaSelecionada}>
           {cursosFiltrados.map((curso) => (
-            <a href="https://www.acaonsfatima.org.br/escola-prof-nossa-senhora-de-f%C3%A1tima" target="_blank" >
+            <div>
               <article className="cursos-item" key={curso.id}>
                 <div className="cursos-item-imagem">
                   <img src={curso.imagem} alt={curso.nome} loading="lazy" />
@@ -50,19 +50,18 @@ function Cursos() {
                   <p>{curso.descricao}</p>
                 </div>
               </article>
-            </a>
+            </div>
           ))}
         </div>
 
         <div className="cursos-acao">
-          <button
-            className="botao-azul"
-            onClick={() =>
-              document.getElementById("inscricao").scrollIntoView({ behavior: "smooth" })
-            }
-          >
-            Quero saber mais!
-          </button>
+          <a href="https://www.acaonsfatima.org.br/escola-prof-nossa-senhora-de-f%C3%A1tima" target="_blank">
+            <button
+              className="botao-azul"
+            >
+              Quero saber mais!
+            </button>
+          </a>
         </div>
       </div>
     </section>

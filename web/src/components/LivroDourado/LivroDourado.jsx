@@ -1,4 +1,4 @@
-import livroDourado from "../../assets/freiEPessoas.webp";
+import livroDourado from "../../assets/FREI_COM_EX-ALUNOS.webp";
 import "./livro-dourado.css";
 
 const passos = [
@@ -39,12 +39,10 @@ function LivroDourado() {
         </div>
 
         <div className="livro-texto">
-          <span className="livro-selo">Exclusivo para ex-alunos</span>
-          <h2>O Livro Dourado</h2>
+          <span className="livro-selo">Exclusivo para:</span>
+          <h2>Ex-Freianos</h2>
           <p>
-            É a memória viva do Instituto. Um livro onde cada ex-aluno escreve o que viveu por aqui:
-            as aulas, os professores, as amizades e a virada de chave que a formação trouxe para a
-            sua vida profissional.
+            Você não é apenas um ex-aluno, é parte da nossa história. Volte para reencontrar amigos, professores e memórias especiais. Compartilhe sua trajetória e deixe sua lembrança registrada. Faça parte do nosso Livro de Ouro dos Ex-Freianos. Sua história continua aqui.
           </p>
 
           <ul className="livro-passos">
@@ -59,7 +57,7 @@ function LivroDourado() {
           </ul>
 
           <button className="botao-amarelo" onClick={irParaInscricao}>
-            Quero deixar meu depoimento
+            Quero Participar
           </button>
         </div>
       </div>

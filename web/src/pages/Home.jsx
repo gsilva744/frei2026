@@ -15,6 +15,7 @@ import Footer from "../components/Footer/Footer";
 import { useVisitantes } from "../utils/VisitantesContext";
 import predio from "../assets/escola.png";
 import "../components/Formulario/formulario.css";
+import Parceiros from "../components/Parceiros/Parceiros";
 
 function Home() {
   const navegar = useNavigate();
@@ -33,6 +34,8 @@ function Home() {
       <Cursos />
 
       <Depoimentos />
+
+      <Parceiros />
 
       <section className="secao secao-cinza" id="inscricao">
         <div className="container">

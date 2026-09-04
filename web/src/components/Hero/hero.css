@@ -1,9 +1,13 @@
 .hero {
   background-color: var(--azul);
-  background-image: linear-gradient(to bottom, #0B162A 0%, #122444 0%, #264C90 50%, #122444 100%, #08112C 100%);
+  background-image: url('../../assets/banner.webp');
+  /* linear-gradient(to bottom, #0B162A 0%, #122444 0%, #264C90 50%, #122444 100%, #08112C 100%); */
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
   color: var(--branco);
   text-align: center;
-  padding: 60px 0 60px;
+  padding: 100px 0 100px;
 }
 
 .hero-conteudo {
