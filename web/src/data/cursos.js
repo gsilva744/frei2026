@@ -14,7 +14,6 @@ import intermediario from '../assets/ingles intermediario (sábado).jpg';
 import avancado from '../assets/ingles avançado1 (sábado).jpg';
 import eletricista from '../assets/ELETRICISTA_INSTALADOR.webp';
 
-/* Categorias de cursos usadas nos botões da seção (icone = componente Lucide) */
 export const categorias = [
   { id: "Tecnicos", nome: "Tecnicos", Icone: Wrench },
   { id: "Livres", nome: "Livres", Icone:  BookOpen},
