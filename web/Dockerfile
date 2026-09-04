@@ -4,7 +4,7 @@
 # o Vite embute variáveis VITE_* no bundle do cliente, não é possível trocá-la
 # depois só reiniciando o container.
 
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
@@ -17,7 +17,7 @@ RUN npm run build
 
 # O build do nitro (preset node-server) gera um servidor autocontido em
 # .output/server — não depende de node_modules em tempo de execução.
-FROM node:20-alpine AS runtime
+FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
